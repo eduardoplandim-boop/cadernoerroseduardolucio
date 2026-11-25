@@ -1,0 +1,2774 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#4338ca" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Caderno de Erros" />
+  <title>Caderno de Erros | EDUARDO LANDIM</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Cpath d='M18 18h20a6 6 0 0 1 6 6v24H24a6 6 0 0 0-6 6V18z' fill='none' stroke='white' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M26 28h12M26 36h8' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              500: '#4f46e5',
+              600: '#4338ca',
+              700: '#3730a3',
+              900: '#1e1b4b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts (Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+    .gradient-brand {
+      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #7c3aed 100%);
+    }
+    .gradient-soft {
+      background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%);
+    }
+    .card-premium {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-premium:hover {
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.07);
+    }
+    .nav-item {
+      transition: all 0.18s ease;
+    }
+    .nav-item.active {
+      background: linear-gradient(135deg, #2563eb 0%, #6d28d9 100%);
+      color: #ffffff !important;
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.28);
+    }
+    .nav-item.active svg {
+      color: #ffffff !important;
+    }
+    .fade-in {
+      animation: fadeIn 0.28s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .priority-radio:checked + label {
+      box-shadow: 0 0 0 2px currentColor;
+      transform: translateY(-1px);
+    }
+    .origin-radio:checked + label {
+      box-shadow: 0 0 0 2px currentColor;
+      transform: translateY(-1px);
+    }
+    /* Scrollbar discreta */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Toast */
+    #toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 360px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex bg-slate-50 text-slate-800">
+
+  <!-- Mobile Sidebar Backdrop -->
+  <div id="mobile-backdrop" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 hidden lg:hidden"></div>
+
+  <!-- Sidebar Navigation -->
+  <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-50 h-screen w-72 bg-white border-r border-slate-200 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out">
+    <!-- Brand -->
+    <div class="p-5 border-b border-slate-100">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl gradient-brand flex items-center justify-center text-white shadow-md">
+            <i data-lucide="book-open-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="font-extrabold text-sm tracking-tight text-slate-900 leading-tight">CADERNO DE ERROS</h1>
+            <p class="text-[11px] font-bold text-indigo-600 tracking-wide uppercase">Eduardo Landim</p>
+          </div>
+        </div>
+        <button onclick="toggleMobileSidebar(false)" class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <button onclick="openRegisterForm()" class="mt-4 w-full py-2.5 px-4 rounded-xl gradient-brand text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md hover:opacity-95 active:scale-[0.99] transition">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        <span>REGISTRAR NOVO ERRO</span>
+      </button>
+    </div>
+
+    <!-- Menu Links -->
+    <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+      <button onclick="navigate('dashboard')" data-nav="dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700">
+        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+        <span>Dashboard</span>
+      </button>
+      <button onclick="navigate('registrar')" data-nav="registrar" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700">
+        <i data-lucide="file-plus-2" class="w-4 h-4"></i>
+        <span>Registrar erro</span>
+      </button>
+      <button onclick="navigate('erros')" data-nav="erros" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700">
+        <span class="flex items-center gap-3">
+          <i data-lucide="folder-kanban" class="w-4 h-4"></i>
+          <span>Meus erros</span>
+        </span>
+        <span id="badge-total-erros" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
+      </button>
+      <button onclick="navigate('ciclo')" data-nav="ciclo" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700">
+        <span class="flex items-center gap-3">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <span>Segundo ciclo</span>
+        </span>
+        <span id="badge-pendentes" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">0</span>
+      </button>
+      <button onclick="navigate('evolucao')" data-nav="evolucao" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700">
+        <i data-lucide="trending-up" class="w-4 h-4"></i>
+        <span>Minha evolução</span>
+      </button>
+      <button onclick="navigate('materias')" data-nav="materias" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700">
+        <i data-lucide="layers" class="w-4 h-4"></i>
+        <span>Matérias e tópicos</span>
+      </button>
+      <button onclick="navigate('backup')" data-nav="backup" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700">
+        <i data-lucide="database-backup" class="w-4 h-4"></i>
+        <span>Backup e configurações</span>
+      </button>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="p-4 border-t border-slate-100 bg-slate-50/70">
+      <div class="flex items-center gap-2.5 text-xs text-slate-600">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+        <div>
+          <p class="font-semibold text-slate-700">Armazenamento Local Ativo</p>
+          <p id="sidebar-sync-time" class="text-[11px] text-slate-500">Salvo automaticamente</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Wrapper -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- Top Header -->
+    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-3.5">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <button onclick="toggleMobileSidebar(true)" class="lg:hidden p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900">CADERNO DE ERROS</h2>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                Eduardo Landim
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 hidden sm:block">Uma ferramenta para transformar erros em acertos.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <!-- Status de sincronização/salvamento -->
+          <div id="sync-pill" onclick="navigate('backup')" title="Clique para gerenciar backups e sincronização entre dispositivos" class="cursor-pointer hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition">
+            <i data-lucide="cloud-check" class="w-3.5 h-3.5"></i>
+            <span id="header-sync-status">Dados salvos</span>
+          </div>
+
+          <button onclick="openRegisterForm()" class="py-2 px-3.5 sm:px-4 rounded-xl gradient-brand text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm hover:opacity-95 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span class="hidden xs:inline">NOVO ERRO</span>
+            <span class="xs:hidden">Novo</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main id="app-content" class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+      <!-- Views rendered dynamically -->
+    </main>
+  </div>
+
+  <!-- Modal: Ver Detalhes do Erro -->
+  <div id="detail-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 fade-in">
+      <div id="detail-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Revisar Erro (Segundo Ciclo) -->
+  <div id="review-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-indigo-100 fade-in">
+      <div id="review-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmação -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 fade-in">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+          <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 id="confirm-title" class="text-base font-bold text-slate-900">Confirmar ação</h3>
+          <p id="confirm-message" class="text-sm text-slate-600 mt-1"></p>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end gap-2.5">
+        <button onclick="closeConfirmModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50">Cancelar</button>
+        <button id="confirm-ok-btn" class="px-4 py-2 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 shadow-sm">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <script>
+    // =========================================================================
+    // CONSTANTES E CONFIGURAÇÕES
+    // =========================================================================
+    const STORAGE_KEY = 'caderno_erros_eduardo_landim_v1';
+    const LAST_QUOTE_KEY = 'caderno_erros_last_quote_idx';
+
+    const DEFAULT_SUBJECTS = [
+      { id: 'sub-const', name: 'Direito Constitucional', topics: ['Direitos Fundamentais', 'Controle de Constitucionalidade', 'Organização do Estado', 'Poder Legislativo', 'Poder Judiciário'] },
+      { id: 'sub-adm', name: 'Direito Administrativo', topics: ['Atos Administrativos', 'Poderes Administrativos', 'Licitações e Contratos', 'Responsabilidade Civil do Estado', 'Agentes Públicos'] },
+      { id: 'sub-penal', name: 'Direito Penal', topics: ['Teoria do Crime', 'Crimes contra a Administração Pública', 'Aplicação da Lei Penal', 'Concurso de Pessoas'] },
+      { id: 'sub-procpenal', name: 'Direito Processual Penal', topics: ['Inquérito Policial', 'Ação Penal', 'Provas', 'Prisões e Medidas Cautelares'] },
+      { id: 'sub-port', name: 'Língua Portuguesa', topics: ['Concordância Verbal e Nominal', 'Crase', 'Regência', 'Interpretação de Texto', 'Pontuação'] },
+      { id: 'sub-rlm', name: 'Raciocínio Lógico', topics: ['Proposições e Conectivos', 'Equivalências Lógicas', 'Probabilidade', 'Análise Combinatória'] }
+    ];
+
+    const PRIORITIES = {
+      alta: {
+        id: 'alta',
+        label: 'Prioridade Alta',
+        short: 'Alta',
+        dot: '🔴',
+        desc: 'Erros persistentes, conceitos que ainda não domino ou questões que continuo errando.',
+        badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+        borderClass: 'border-rose-300 text-rose-700 bg-rose-50/70',
+        colorHex: '#e11d48'
+      },
+      media: {
+        id: 'media',
+        label: 'Prioridade Média',
+        short: 'Média',
+        dot: '🟡',
+        desc: 'Erros que já compreendi, mas merecem atenção para não se repetirem.',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+        borderClass: 'border-amber-300 text-amber-800 bg-amber-50/70',
+        colorHex: '#d97706'
+      },
+      superado: {
+        id: 'superado',
+        label: 'Superado',
+        short: 'Superado',
+        dot: '🟢',
+        desc: 'Erros que já corrigi, compreendi e demonstrei domínio com novas questões.',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        borderClass: 'border-emerald-300 text-emerald-800 bg-emerald-50/70',
+        colorHex: '#059669'
+      }
+    };
+
+    const ORIGINS = {
+      desconhecimento: {
+        id: 'desconhecimento',
+        label: 'Desconhecimento',
+        desc: 'Nunca havia estudado o conceito, termo ou conteúdo.',
+        example: 'Ex.: nunca tinha ouvido falar em modularidade.',
+        tip: 'Priorize teoria objetiva, lei seca ou leitura base antes de avançar para blocos extensos de questões desse tema.',
+        icon: 'compass',
+        badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
+        cardClass: 'border-blue-300 text-blue-800 bg-blue-50/70',
+        colorHex: '#2563eb'
+      },
+      confusao: {
+        id: 'confusao',
+        label: 'Confusão entre conceitos',
+        desc: 'Conhecia os conceitos, mas confundi um com o outro.',
+        example: 'Ex.: anulação x revogação.',
+        tip: 'Crie tabelas comparativas lado a lado destacando as 2 ou 3 diferenças decisivas entre os institutos.',
+        icon: 'git-compare',
+        badgeClass: 'bg-purple-100 text-purple-800 border-purple-200',
+        cardClass: 'border-purple-300 text-purple-800 bg-purple-50/70',
+        colorHex: '#7c3aed'
+      },
+      esquecimento: {
+        id: 'esquecimento',
+        label: 'Esquecimento',
+        desc: 'Já havia estudado, mas não lembrei no momento da questão.',
+        example: 'Ex.: um prazo ou uma exceção legal.',
+        tip: 'Aumente a frequência de revisões espaçadas (Segundo Ciclo) e transforme prazos/exceções em alertas curtos.',
+        icon: 'clock-alert',
+        badgeClass: 'bg-orange-100 text-orange-800 border-orange-200',
+        cardClass: 'border-orange-300 text-orange-800 bg-orange-50/70',
+        colorHex: '#ea580c'
+      },
+      interpretacao: {
+        id: 'interpretacao',
+        label: 'Erro de interpretação',
+        desc: 'Conhecia o conteúdo, mas interpretei mal o enunciado ou as alternativas.',
+        example: 'Ex.: não perceber que pedia a alternativa incorreta.',
+        tip: 'Pratique leitura ativa grifando comandos ("EXCETO", "INCORRETA", "SEMPRE") e analisando o padrão da banca.',
+        icon: 'scan-search',
+        badgeClass: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+        cardClass: 'border-cyan-300 text-cyan-800 bg-cyan-50/70',
+        colorHex: '#0891b2'
+      },
+      nao_classificado: {
+        id: 'nao_classificado',
+        label: 'Não classificado',
+        desc: 'Registro antigo sem origem atribuída.',
+        example: '',
+        tip: 'Classifique registros antigos para tornar o diagnóstico de causas ainda mais preciso.',
+        icon: 'help-circle',
+        badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+        cardClass: 'border-slate-300 text-slate-700 bg-slate-50',
+        colorHex: '#64748b'
+      }
+    };
+
+    const MOTIVATIONAL_QUOTES = [
+      'Cada erro corrigido é um passo a mais em direção à aprovação.',
+      'Você não precisa ser perfeito hoje. Precisa ser melhor do que ontem.',
+      'Quem aprende com os próprios erros chega mais preparado à prova.',
+      'A aprovação é construída nos dias em que você decide não desistir.',
+      'Não tenha medo de errar nas questões. Tenha compromisso em não repetir os mesmos erros.',
+      'Seu concorrente pode estudar mais questões. Mas você pode aprender mais com cada uma delas.',
+      'Disciplina é continuar mesmo quando a motivação não aparece.',
+      'O erro nos treinos é o escudo que te protege no dia da prova.',
+      'Constância vence intensidade desorganizada todos os dias.',
+      'Cada revisão bem feita transforma um ponto fraco em ponto garantido.',
+      'A vaga é de quem sustenta o processo quando ele fica silencioso e repetitivo.',
+      'Estudar com método é multiplicar o valor de cada hora sentada na cadeira.',
+      'Um caderno de erros bem cuidado vale mais do que mil páginas lidas sem atenção.',
+      'Você não está atrasado: está lapidando exatamente o que a banca vai cobrar.',
+      'Errar hoje em casa é o preço mais barato para acertar no gabarito oficial.',
+      'A confiança na prova nasce da quantidade de dúvidas que você venceu antes dela.',
+      'Pequenos ajustes diários criam resultados extraordinários no médio prazo.',
+      'Não existe questão perdida quando você extrai a lição que ela trouxe.',
+      'A aprovação não exige genialidade; exige método, revisão e perseverança.',
+      'Transforme frustração em diagnóstico e diagnóstico em evolução.',
+      'Quem domina seus próprios pontos fracos se torna difícil de ser vencido pela banca.',
+      'Mais importante do que a velocidade é não abandonar a direção.',
+      'Todo aprovado já errou exatamente o mesmo assunto que você está revisando hoje.',
+      'Organização reduz a ansiedade e libera energia para aprender de verdade.',
+      'Hoje você planta revisão; amanhã você colhe seu nome no Diário Oficial.',
+      'O segredo não é nunca esquecer, é revisar antes que o esquecimento cobre o preço.',
+      'Sua evolução não é medida pelo que você já sabe, mas pelo que deixou de errar.',
+      'Foco no processo: uma questão, uma correção, um passo firme por vez.',
+      'Quando o cansaço bater, lembre-se do motivo pelo qual você começou essa jornada.',
+      'Excelência em concursos é a soma de detalhes corrigidos com humildade e rigor.',
+      'Cada conceito superado é um peso a menos e uma certeza a mais na sua preparação.',
+      'Persistência com estratégia é o caminho mais curto até a nomeação.'
+    ];
+
+    // =========================================================================
+    // ESTADO DA APLICAÇÃO
+    // =========================================================================
+    let state = {
+      errors: [],
+      subjects: [],
+      history: [],
+      lastSavedAt: null
+    };
+
+    let currentView = 'dashboard';
+    let editingErrorId = null;
+    let currentQuote = '';
+    let activeCharts = {};
+    let filters = {
+      search: '',
+      subject: '',
+      topic: '',
+      priority: '',
+      origin: '',
+      dateFrom: '',
+      dateTo: ''
+    };
+    let expandedTopics = {}; // key: subject||topic -> boolean
+    let confirmCallback = null;
+
+    // =========================================================================
+    // UTILITÁRIOS
+    // =========================================================================
+    function generateId(prefix = 'err') {
+      return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    }
+
+    function todayISO() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function formatDateBR(isoStr) {
+      if (!isoStr) return '--/--/----';
+      const clean = isoStr.split('T')[0];
+      const parts = clean.split('-');
+      if (parts.length !== 3) return isoStr;
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function formatDateTimeBR(isoStr) {
+      if (!isoStr) return 'Agora mesmo';
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return isoStr;
+      return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function escapeHTML(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function getOriginMeta(originKey) {
+      if (!originKey || !ORIGINS[originKey]) return ORIGINS.nao_classificado;
+      return ORIGINS[originKey];
+    }
+
+    function getPriorityMeta(prioKey) {
+      return PRIORITIES[prioKey] || PRIORITIES.alta;
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const styles = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-indigo-600 text-white',
+        warning: 'bg-amber-600 text-white'
+      };
+      const iconName = type === 'success' ? 'check-circle-2' : type === 'error' ? 'x-circle' : 'info';
+      toast.className = `${styles[type] || styles.info} px-4 py-3 rounded-xl shadow-lg text-sm font-semibold flex items-center gap-2.5 fade-in`;
+      toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i><span>${escapeHTML(message)}</span>`;
+      container.appendChild(toast);
+      lucide.createIcons({ nodes: [toast] });
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(6px)';
+        toast.style.transition = 'all 0.25s ease';
+        setTimeout(() => toast.remove(), 260);
+      }, 3200);
+    }
+
+    function openConfirmModal(title, message, onConfirm) {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').textContent = message;
+      confirmCallback = onConfirm;
+      const modal = document.getElementById('confirm-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('confirm-ok-btn').onclick = () => {
+        closeConfirmModal();
+        if (typeof confirmCallback === 'function') confirmCallback();
+      };
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirm-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      confirmCallback = null;
+    }
+
+    // =========================================================================
+    // PERSISTÊNCIA (LOCALSTORAGE)
+    // =========================================================================
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state.errors = Array.isArray(parsed.errors) ? parsed.errors.map(normalizeErrorRecord) : [];
+          state.subjects = Array.isArray(parsed.subjects) && parsed.subjects.length > 0 ? parsed.subjects : JSON.parse(JSON.stringify(DEFAULT_SUBJECTS));
+          state.history = Array.isArray(parsed.history) ? parsed.history : [];
+          state.lastSavedAt = parsed.lastSavedAt || new Date().toISOString();
+        } else {
+          state.errors = [];
+          state.subjects = JSON.parse(JSON.stringify(DEFAULT_SUBJECTS));
+          state.history = [];
+          state.lastSavedAt = new Date().toISOString();
+          saveState(false);
+        }
+      } catch (e) {
+        console.error('Erro ao carregar dados:', e);
+        state.subjects = JSON.parse(JSON.stringify(DEFAULT_SUBJECTS));
+      }
+      syncSubjectsFromErrors();
+      updateBadgesAndSyncUI();
+    }
+
+    function normalizeErrorRecord(rec) {
+      // Preserva registros antigos sem origem como 'nao_classificado', sem atribuir categoria automaticamente
+      const validOrigins = ['desconhecimento', 'confusao', 'esquecimento', 'interpretacao'];
+      const origin = validOrigins.includes(rec.origin) ? rec.origin : 'nao_classificado';
+      const validPrios = ['alta', 'media', 'superado'];
+      const priority = validPrios.includes(rec.priority) ? rec.priority : 'alta';
+      return {
+        id: rec.id || generateId('err'),
+        subject: (rec.subject || 'Geral').trim(),
+        topic: (rec.topic || 'Geral').trim(),
+        description: rec.description || '',
+        correction: rec.correction || '',
+        prevention: rec.prevention || '',
+        priority,
+        origin,
+        reference: rec.reference || '',
+        date: rec.date || todayISO(),
+        createdAt: rec.createdAt || new Date().toISOString(),
+        updatedAt: rec.updatedAt || new Date().toISOString(),
+        overcomeAt: rec.overcomeAt || (priority === 'superado' ? (rec.updatedAt || new Date().toISOString()) : null),
+        reviewCount: Number(rec.reviewCount || 0)
+      };
+    }
+
+    function syncSubjectsFromErrors() {
+      const map = new Map();
+      state.subjects.forEach(s => {
+        const key = s.name.trim().toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, { id: s.id || generateId('sub'), name: s.name.trim(), topics: [...new Set((s.topics || []).map(t => t.trim()).filter(Boolean))] });
+        }
+      });
+      state.errors.forEach(err => {
+        const sName = err.subject.trim();
+        const key = sName.toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, { id: generateId('sub'), name: sName, topics: [] });
+        }
+        const subj = map.get(key);
+        const tName = err.topic.trim();
+        if (tName && !subj.topics.some(t => t.toLowerCase() === tName.toLowerCase())) {
+          subj.topics.push(tName);
+        }
+      });
+      state.subjects = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    }
+
+    function saveState(logSync = true) {
+      state.lastSavedAt = new Date().toISOString();
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        if (logSync) updateBadgesAndSyncUI();
+      } catch (e) {
+        showToast('Erro ao salvar no navegador. Verifique o espaço disponível.', 'error');
+      }
+    }
+
+    function recordHistory(action, details) {
+      state.history.unshift({
+        id: generateId('hist'),
+        at: new Date().toISOString(),
+        action,
+        details
+      });
+      if (state.history.length > 120) state.history = state.history.slice(0, 120);
+    }
+
+    function updateBadgesAndSyncUI() {
+      const total = state.errors.length;
+      const pendentes = state.errors.filter(e => e.priority !== 'superado').length;
+      const bTotal = document.getElementById('badge-total-erros');
+      const bPend = document.getElementById('badge-pendentes');
+      if (bTotal) bTotal.textContent = total;
+      if (bPend) bPend.textContent = pendentes;
+
+      const timeStr = state.lastSavedAt ? new Date(state.lastSavedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+      const headerSync = document.getElementById('header-sync-status');
+      const sidebarSync = document.getElementById('sidebar-sync-time');
+      if (headerSync) headerSync.textContent = timeStr ? `Salvo às ${timeStr}` : 'Salvo localmente';
+      if (sidebarSync) sidebarSync.textContent = timeStr ? `Último salvamento: ${timeStr}` : 'Salvo automaticamente';
+    }
+
+    // =========================================================================
+    // MENSAGEM MOTIVACIONAL (SEM REPETIR A ANTERIOR)
+    // =========================================================================
+    function pickMotivationalQuote(forceNew = false) {
+      const lastIdxRaw = localStorage.getItem(LAST_QUOTE_KEY);
+      const lastIdx = lastIdxRaw !== null ? parseInt(lastIdxRaw, 10) : -1;
+      let idx = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
+      if (MOTIVATIONAL_QUOTES.length > 1 && idx === lastIdx) {
+        idx = (idx + 1 + Math.floor(Math.random() * (MOTIVATIONAL_QUOTES.length - 1))) % MOTIVATIONAL_QUOTES.length;
+      }
+      localStorage.setItem(LAST_QUOTE_KEY, String(idx));
+      currentQuote = MOTIVATIONAL_QUOTES[idx];
+      if (forceNew) {
+        const el = document.getElementById('motivational-quote-text');
+        if (el) {
+          el.classList.remove('fade-in');
+          void el.offsetWidth;
+          el.textContent = `"${currentQuote}"`;
+          el.classList.add('fade-in');
+        }
+      }
+    }
+
+    // =========================================================================
+    // CARICATURA PERSONALIZADA EM SVG (EDUARDO LANDIM)
+    // Pele branca, olhos verdes, bigode e cavanhaque pretos, cabelo preto com fios grisalhos,
+    // óculos pretos, camisa branca com gravata preta
+    // =========================================================================
+    function getCaricatureSVG() {
+      return `
+      <svg viewBox="0 0 180 190" class="w-32 h-34 sm:w-36 sm:h-38 shrink-0 drop-shadow-md" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Caricatura de Eduardo Landim">
+        <defs>
+          <linearGradient id="bgCircle" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#dbeafe"/>
+            <stop offset="100%" stop-color="#ede9fe"/>
+          </linearGradient>
+          <linearGradient id="skinGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fde4d2"/>
+            <stop offset="100%" stop-color="#f7ceb5"/>
+          </linearGradient>
+          <clipPath id="avatarClip">
+            <circle cx="90" cy="95" r="82"/>
+          </clipPath>
+        </defs>
+
+        <!-- Fundo circular -->
+        <circle cx="90" cy="95" r="84" fill="url(#bgCircle)" stroke="#ffffff" stroke-width="4"/>
+
+        <g clip-path="url(#avatarClip)">
+          <!-- Ombros e Camisa Branca -->
+          <path d="M22 185 C26 144, 52 134, 90 134 C128 134, 154 144, 158 185 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+          <!-- Sombreamento discreto da camisa -->
+          <path d="M40 155 L46 185 M140 155 L134 185" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
+
+          <!-- Pescoço -->
+          <rect x="76" y="114" width="28" height="26" rx="10" fill="#f2c4a6"/>
+
+          <!-- Gola da camisa branca -->
+          <polygon points="75,134 90,151 64,154" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" stroke-linejoin="round"/>
+          <polygon points="105,134 90,151 116,154" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" stroke-linejoin="round"/>
+
+          <!-- Gravata Preta -->
+          <polygon points="84,146 96,146 93,156 87,156" fill="#0f172a"/>
+          <polygon points="87,156 93,156 99,185 81,185" fill="#1e293b"/>
+          <line x1="90" y1="157" x2="90" y2="184" stroke="#334155" stroke-width="1.2" stroke-dasharray="3,3"/>
+
+          <!-- Orelhas -->
+          <ellipse cx="48" cy="84" rx="7" ry="11" fill="#f5cab0" stroke="#e2b093" stroke-width="1.2"/>
+          <ellipse cx="132" cy="84" rx="7" ry="11" fill="#f5cab0" stroke="#e2b093" stroke-width="1.2"/>
+
+          <!-- Rosto (pele branca) -->
+          <path d="M51 74 C51 44, 129 44, 129 74 C129 107, 114 126, 90 126 C66 126, 51 107, 51 74 Z" fill="url(#skinGrad)" stroke="#e8bca2" stroke-width="1.2"/>
+
+          <!-- Cabelo preto com fios grisalhos -->
+          <path d="M47 77 C44 45, 62 27, 92 27 C121 27, 136 44, 133 77 C130 62, 124 52, 114 48 C100 54, 74 52, 62 48 C54 53, 50 64, 47 77 Z" fill="#111827"/>
+          <!-- Topete estilizado -->
+          <path d="M62 42 C75 28, 108 26, 124 44 C112 40, 96 42, 82 44 Z" fill="#1f2937"/>
+          <!-- Fios grisalhos nas laterais e topo -->
+          <path d="M51 64 C52 57, 55 52, 58 49" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <path d="M54 69 C55 63, 57 59, 60 56" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+          <path d="M129 64 C128 57, 125 52, 122 49" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <path d="M126 69 C125 63, 123 59, 120 56" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+          <path d="M77 35 C86 32, 95 32, 103 35" stroke="#cbd5e1" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+          <path d="M88 41 C95 39, 102 40, 108 42" stroke="#94a3b8" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+
+          <!-- Sobrancelhas pretas -->
+          <path d="M62 67 Q72 63 81 66" stroke="#111827" stroke-width="3" stroke-linecap="round" fill="none"/>
+          <path d="M99 66 Q108 63 118 67" stroke="#111827" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+          <!-- Olhos Verdes -->
+          <!-- Olho esquerdo -->
+          <ellipse cx="72" cy="79" rx="7.5" ry="5.5" fill="#ffffff"/>
+          <circle cx="72" cy="79" r="3.8" fill="#15803d"/>
+          <circle cx="72" cy="79" r="2.2" fill="#22c55e"/>
+          <circle cx="72" cy="79" r="1.4" fill="#0f172a"/>
+          <circle cx="73.5" cy="77.5" r="1.1" fill="#ffffff"/>
+
+          <!-- Olho direito -->
+          <ellipse cx="108" cy="79" rx="7.5" ry="5.5" fill="#ffffff"/>
+          <circle cx="108" cy="79" r="3.8" fill="#15803d"/>
+          <circle cx="108" cy="79" r="2.2" fill="#22c55e"/>
+          <circle cx="108" cy="79" r="1.4" fill="#0f172a"/>
+          <circle cx="109.5" cy="77.5" r="1.1" fill="#ffffff"/>
+
+          <!-- Óculos Pretos (armação moderna) -->
+          <rect x="57" y="70" width="29" height="18" rx="5" fill="rgba(255,255,255,0.16)" stroke="#0f172a" stroke-width="3"/>
+          <rect x="94" y="70" width="29" height="18" rx="5" fill="rgba(255,255,255,0.16)" stroke="#0f172a" stroke-width="3"/>
+          <path d="M86 77 Q90 75 94 77" stroke="#0f172a" stroke-width="2.8" fill="none"/>
+          <line x1="51" y1="77" x2="57" y2="77" stroke="#0f172a" stroke-width="2.6"/>
+          <line x1="123" y1="77" x2="129" y2="77" stroke="#0f172a" stroke-width="2.6"/>
+          <!-- Reflexo sutil na lente -->
+          <line x1="61" y1="74" x2="66" y2="79" stroke="#ffffff" stroke-width="1.4" stroke-opacity="0.6" stroke-linecap="round"/>
+          <line x1="98" y1="74" x2="103" y2="79" stroke="#ffffff" stroke-width="1.4" stroke-opacity="0.6" stroke-linecap="round"/>
+
+          <!-- Nariz -->
+          <path d="M90 80 L88 94 Q90 96 93 94" stroke="#d9a182" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+          <!-- Bigode e Cavanhaque Pretos -->
+          <!-- Bigode -->
+          <path d="M74 103 C78 97, 86 98, 90 100 C94 98, 102 97, 106 103 C102 105, 95 103, 90 103 C85 103, 78 105, 74 103 Z" fill="#111827"/>
+          <!-- Sorriso confiante -->
+          <path d="M80 107 Q90 113 100 107" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+          <path d="M81 107 Q90 112 99 107" stroke="#7c2d12" stroke-width="1" stroke-linecap="round" fill="none"/>
+          <!-- Cavanhaque preto conectado -->
+          <path d="M74 103 C73 114, 79 125, 90 126 C101 125, 107 114, 106 103 C104 111, 98 117, 90 117 C82 117, 76 111, 74 103 Z" fill="#111827"/>
+          <path d="M82 118 Q90 123 98 118 L96 125 Q90 127 84 125 Z" fill="#111827"/>
+        </g>
+      </svg>`;
+    }
+
+    // =========================================================================
+    // NAVEGAÇÃO
+    // =========================================================================
+    function toggleMobileSidebar(open) {
+      const sb = document.getElementById('sidebar');
+      const bd = document.getElementById('mobile-backdrop');
+      if (open) {
+        sb.classList.remove('-translate-x-full');
+        bd.classList.remove('hidden');
+      } else {
+        sb.classList.add('-translate-x-full');
+        bd.classList.add('hidden');
+      }
+    }
+
+    function destroyActiveCharts() {
+      Object.values(activeCharts).forEach(ch => {
+        if (ch && typeof ch.destroy === 'function') ch.destroy();
+      });
+      activeCharts = {};
+    }
+
+    function navigate(view, opts = {}) {
+      currentView = view;
+      if (view !== 'registrar') editingErrorId = null;
+      toggleMobileSidebar(false);
+
+      // Update sidebar active state
+      document.querySelectorAll('[data-nav]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.nav === view);
+      });
+
+      destroyActiveCharts();
+      const container = document.getElementById('app-content');
+      container.innerHTML = '';
+
+      switch (view) {
+        case 'dashboard': renderDashboard(container); break;
+        case 'registrar': renderRegisterForm(container, opts.editId || editingErrorId); break;
+        case 'erros': renderMyErrors(container); break;
+        case 'ciclo': renderSecondCycle(container); break;
+        case 'evolucao': renderEvolution(container); break;
+        case 'materias': renderSubjectsManager(container); break;
+        case 'backup': renderBackupSettings(container); break;
+        default: renderDashboard(container);
+      }
+
+      lucide.createIcons();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openRegisterForm(editId = null) {
+      editingErrorId = editId;
+      navigate('registrar', { editId });
+    }
+
+    // =========================================================================
+    // MÉTRICAS AUXILIARES
+    // =========================================================================
+    function computeMetrics() {
+      const total = state.errors.length;
+      const alta = state.errors.filter(e => e.priority === 'alta').length;
+      const media = state.errors.filter(e => e.priority === 'media').length;
+      const superado = state.errors.filter(e => e.priority === 'superado').length;
+      const pctSuperado = total > 0 ? Math.round((superado / total) * 100) : 0;
+
+      const subjectsWithErrors = new Set(state.errors.map(e => e.subject));
+      const subjectCount = state.subjects.length;
+
+      // Por matéria
+      const bySubject = {};
+      state.errors.forEach(e => {
+        if (!bySubject[e.subject]) bySubject[e.subject] = { total: 0, alta: 0, media: 0, superado: 0 };
+        bySubject[e.subject].total++;
+        bySubject[e.subject][e.priority]++;
+      });
+
+      // Por tópico
+      const byTopic = {};
+      state.errors.forEach(e => {
+        const key = `${e.subject}|||${e.topic}`;
+        if (!byTopic[key]) byTopic[key] = { subject: e.subject, topic: e.topic, total: 0, alta: 0, media: 0, superado: 0, pending: 0 };
+        byTopic[key].total++;
+        byTopic[key][e.priority]++;
+        if (e.priority !== 'superado') byTopic[key].pending++;
+      });
+
+      // Por origem
+      const byOrigin = {
+        desconhecimento: 0,
+        confusao: 0,
+        esquecimento: 0,
+        interpretacao: 0,
+        nao_classificado: 0
+      };
+      state.errors.forEach(e => {
+        const k = ORIGINS[e.origin] ? e.origin : 'nao_classificado';
+        byOrigin[k]++;
+      });
+
+      return { total, alta, media, superado, pctSuperado, subjectCount, subjectsWithErrors: subjectsWithErrors.size, bySubject, byTopic, byOrigin };
+    }
+
+    // =========================================================================
+    // VIEW 1: DASHBOARD
+    // =========================================================================
+    function renderDashboard(container) {
+      const m = computeMetrics();
+      const latestErrors = [...state.errors].sort((a, b) => (b.createdAt || b.date).localeCompare(a.createdAt || a.date)).slice(0, 5);
+      const topTopics = Object.values(m.byTopic).sort((a, b) => b.total - a.total).slice(0, 5);
+
+      container.innerHTML = `
+        <div class="space-y-6 fade-in">
+          <!-- Hero + Caricatura + Mensagem Motivacional -->
+          <div class="relative overflow-hidden rounded-2xl gradient-brand text-white p-6 sm:p-7 shadow-lg">
+            <div class="absolute -right-12 -top-12 w-56 h-56 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+            <div class="absolute -left-10 -bottom-16 w-48 h-48 rounded-full bg-indigo-300/20 blur-2xl pointer-events-none"></div>
+
+            <div class="relative flex flex-col md:flex-row items-center gap-6">
+              ${getCaricatureSVG()}
+
+              <div class="flex-1 text-center md:text-left">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-xs text-xs font-semibold mb-3">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+                  <span>Foco na Aprovação • Eduardo Landim</span>
+                </div>
+                <blockquote id="motivational-quote-text" class="text-lg sm:text-xl font-bold leading-snug tracking-tight">
+                  "${escapeHTML(currentQuote)}"
+                </blockquote>
+                <div class="mt-4 flex flex-wrap items-center justify-center md:justify-start gap-2.5">
+                  <button onclick="openRegisterForm()" class="px-4 py-2 rounded-xl bg-white text-indigo-700 font-bold text-xs sm:text-sm hover:bg-indigo-50 transition shadow-sm flex items-center gap-1.5">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    + Registrar Novo Erro
+                  </button>
+                  <button onclick="navigate('ciclo')" class="px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs sm:text-sm transition flex items-center gap-1.5 border border-white/20">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Revisar Segundo Ciclo (${m.alta + m.media})
+                  </button>
+                  <button onclick="pickMotivationalQuote(true)" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/90 text-xs font-semibold transition flex items-center gap-1" title="Sortear nova mensagem motivacional">
+                    <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>
+                    Nova frase
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6 Cards de Métricas -->
+          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div class="card-premium p-4">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500">Total de Erros</span>
+                <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center"><i data-lucide="book-x" class="w-4 h-4"></i></span>
+              </div>
+              <p class="text-2xl font-extrabold text-slate-900 mt-2">${m.total}</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">registros catalogados</p>
+            </div>
+
+            <div class="card-premium p-4">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500">Matérias</span>
+                <span class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center"><i data-lucide="layers" class="w-4 h-4"></i></span>
+              </div>
+              <p class="text-2xl font-extrabold text-slate-900 mt-2">${m.subjectCount}</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">${m.subjectsWithErrors} com erros</p>
+            </div>
+
+            <div class="card-premium p-4 border-l-4 border-l-rose-500">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-rose-700">Prioridade Alta</span>
+                <span class="text-base">🔴</span>
+              </div>
+              <p class="text-2xl font-extrabold text-rose-600 mt-2">${m.alta}</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">atenção máxima</p>
+            </div>
+
+            <div class="card-premium p-4 border-l-4 border-l-amber-500">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-amber-700">Prioridade Média</span>
+                <span class="text-base">🟡</span>
+              </div>
+              <p class="text-2xl font-extrabold text-amber-600 mt-2">${m.media}</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">em consolidação</p>
+            </div>
+
+            <div class="card-premium p-4 border-l-4 border-l-emerald-500">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-emerald-700">Superados</span>
+                <span class="text-base">🟢</span>
+              </div>
+              <p class="text-2xl font-extrabold text-emerald-600 mt-2">${m.superado}</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">conteúdo dominado</p>
+            </div>
+
+            <div class="card-premium p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-indigo-200">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-indigo-700">% Superados</span>
+                <span class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center"><i data-lucide="award" class="w-4 h-4"></i></span>
+              </div>
+              <p class="text-2xl font-extrabold text-indigo-700 mt-2">${m.pctSuperado}%</p>
+              <p class="text-[11px] text-indigo-600/80 mt-0.5">taxa de domínio</p>
+            </div>
+          </div>
+
+          <!-- Indicador Visual de Evolução -->
+          <div class="card-premium p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+              <div class="flex items-center gap-2">
+                <i data-lucide="gauge" class="w-5 h-5 text-indigo-600"></i>
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base">Indicador de Superação dos Erros</h3>
+              </div>
+              <span class="text-sm font-extrabold text-indigo-700">${m.superado} de ${m.total} superados (${m.pctSuperado}%)</span>
+            </div>
+            <div class="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex">
+              ${m.total > 0 ? `
+                <div style="width:${(m.superado / m.total) * 100}%" class="bg-emerald-500 transition-all duration-500" title="Superados: ${m.superado}"></div>
+                <div style="width:${(m.media / m.total) * 100}%" class="bg-amber-400 transition-all duration-500" title="Prioridade Média: ${m.media}"></div>
+                <div style="width:${(m.alta / m.total) * 100}%" class="bg-rose-500 transition-all duration-500" title="Prioridade Alta: ${m.alta}"></div>
+              ` : '<div class="w-full bg-slate-200"></div>'}
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mt-2.5 text-xs text-slate-500">
+              <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Superados (${m.superado})</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>Média (${m.media})</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>Alta (${m.alta})</span>
+              </div>
+              <button onclick="navigate('evolucao')" class="text-indigo-600 font-semibold hover:underline">Ver análise completa →</button>
+            </div>
+          </div>
+
+          ${m.total === 0 ? `
+            <!-- Estado Vazio Amigável -->
+            <div class="card-premium p-8 sm:p-10 text-center gradient-soft border-dashed border-2 border-indigo-200">
+              <div class="w-16 h-16 rounded-2xl gradient-brand text-white flex items-center justify-center mx-auto shadow-md mb-4">
+                <i data-lucide="book-open" class="w-8 h-8"></i>
+              </div>
+              <h3 class="text-lg font-extrabold text-slate-900">Seu Caderno de Erros está pronto para começar!</h3>
+              <p class="text-sm text-slate-600 max-w-lg mx-auto mt-2">
+                Cadastre seu primeiro erro de questão para acompanhar gráficos, identificar a origem dos seus deslizes e ativar o Segundo Ciclo de revisões.
+              </p>
+              <div class="mt-6 flex flex-wrap justify-center gap-3">
+                <button onclick="openRegisterForm()" class="px-5 py-2.5 rounded-xl gradient-brand text-white font-bold text-sm shadow-md hover:opacity-95 transition">
+                  + Registrar Meu Primeiro Erro
+                </button>
+                <button onclick="loadSampleData()" class="px-5 py-2.5 rounded-xl bg-white border border-indigo-200 text-indigo-700 font-bold text-sm hover:bg-indigo-50 transition">
+                  Carregar 8 Erros de Exemplo
+                </button>
+              </div>
+            </div>
+          ` : `
+            <!-- Gráficos do Dashboard -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div class="card-premium p-5 lg:col-span-2">
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base mb-4 flex items-center gap-2">
+                  <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i>
+                  Erros por Matéria
+                </h3>
+                <div class="h-64">
+                  <canvas id="dash-subject-chart"></canvas>
+                </div>
+              </div>
+
+              <div class="card-premium p-5">
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base mb-4 flex items-center gap-2">
+                  <i data-lucide="pie-chart" class="w-4 h-4 text-purple-600"></i>
+                  Distribuição por Prioridade
+                </h3>
+                <div class="h-64 flex items-center justify-center">
+                  <canvas id="dash-priority-chart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Listas: Últimos Erros e Assuntos com mais erros -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="card-premium p-5">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                    <i data-lucide="clock" class="w-4 h-4 text-blue-600"></i>
+                    Últimos Erros Registrados
+                  </h3>
+                  <button onclick="navigate('erros')" class="text-xs font-bold text-indigo-600 hover:underline">Ver todos</button>
+                </div>
+                <div class="space-y-3">
+                  ${latestErrors.map(err => {
+                    const p = getPriorityMeta(err.priority);
+                    const o = getOriginMeta(err.origin);
+                    return `
+                      <div onclick="openDetailModal('${err.id}')" class="p-3.5 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 cursor-pointer transition">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                          <span class="text-xs font-bold text-indigo-700">${escapeHTML(err.subject)} • ${escapeHTML(err.topic)}</span>
+                          <span class="text-[11px] text-slate-400">${formatDateBR(err.date)}</span>
+                        </div>
+                        <p class="text-sm text-slate-700 mt-1 line-clamp-2">${escapeHTML(err.description)}</p>
+                        <div class="mt-2 flex items-center gap-2 flex-wrap">
+                          <span class="text-[11px] font-bold px-2 py-0.5 rounded-full border ${p.badgeClass}">${p.dot} ${p.short}</span>
+                          <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full border ${o.badgeClass}">${o.label}</span>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <div class="card-premium p-5">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                    <i data-lucide="flame" class="w-4 h-4 text-rose-500"></i>
+                    Assuntos com Mais Erros
+                  </h3>
+                  <button onclick="navigate('ciclo')" class="text-xs font-bold text-indigo-600 hover:underline">Revisar</button>
+                </div>
+                <div class="space-y-3">
+                  ${topTopics.map((t, idx) => {
+                    const pct = m.total > 0 ? Math.round((t.total / m.total) * 100) : 0;
+                    return `
+                      <div onclick="filterBySubjectAndTopic('${escapeHTML(t.subject).replace(/'/g, "\\'")}', '${escapeHTML(t.topic).replace(/'/g, "\\'")}')" class="p-3.5 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-slate-50 cursor-pointer transition">
+                        <div class="flex items-center justify-between gap-2">
+                          <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center shrink-0">${idx + 1}</span>
+                            <div class="truncate">
+                              <p class="text-sm font-bold text-slate-800 truncate">${escapeHTML(t.topic)}</p>
+                              <p class="text-[11px] text-slate-500 truncate">${escapeHTML(t.subject)}</p>
+                            </div>
+                          </div>
+                          <div class="text-right shrink-0">
+                            <span class="text-sm font-extrabold text-slate-900">${t.total}</span>
+                            <span class="text-[11px] text-slate-500 block">${t.pending} pendente(s)</span>
+                          </div>
+                        </div>
+                        <div class="mt-2 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div style="width:${Math.max(pct, 8)}%" class="h-full gradient-brand rounded-full"></div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+          `}
+        </div>
+      `;
+
+      if (m.total > 0) {
+        renderDashboardCharts(m);
+      }
+    }
+
+    function renderDashboardCharts(m) {
+      const subjLabels = Object.keys(m.bySubject);
+      const subjValues = subjLabels.map(k => m.bySubject[k].total);
+
+      const ctx1 = document.getElementById('dash-subject-chart');
+      if (ctx1) {
+        activeCharts.dashSubject = new Chart(ctx1, {
+          type: 'bar',
+          data: {
+            labels: subjLabels,
+            datasets: [{
+              label: 'Erros registrados',
+              data: subjValues,
+              backgroundColor: 'rgba(79, 70, 229, 0.82)',
+              hoverBackgroundColor: '#4338ca',
+              borderRadius: 8,
+              maxBarThickness: 42
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+              x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+          }
+        });
+      }
+
+      const ctx2 = document.getElementById('dash-priority-chart');
+      if (ctx2) {
+        activeCharts.dashPriority = new Chart(ctx2, {
+          type: 'doughnut',
+          data: {
+            labels: ['Prioridade Alta', 'Prioridade Média', 'Superados'],
+            datasets: [{
+              data: [m.alta, m.media, m.superado],
+              backgroundColor: ['#e11d48', '#f59e0b', '#10b981'],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '64%',
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, font: { size: 12 } } }
+            }
+          }
+        });
+      }
+    }
+
+    function filterBySubjectAndTopic(subject, topic) {
+      filters = { search: '', subject, topic, priority: '', origin: '', dateFrom: '', dateTo: '' };
+      expandedTopics[`${subject}|||${topic}`] = true;
+      navigate('erros');
+    }
+
+    // =========================================================================
+    // VIEW 2: CADASTRAR / EDITAR ERRO
+    // =========================================================================
+    function renderRegisterForm(container, editId = null) {
+      const existing = editId ? state.errors.find(e => e.id === editId) : null;
+      const isEdit = Boolean(existing);
+
+      const defaultSubject = existing ? existing.subject : (state.subjects[0]?.name || '');
+      const defaultTopic = existing ? existing.topic : '';
+      const defaultPriority = existing ? existing.priority : 'alta';
+      const defaultOrigin = existing ? (existing.origin === 'nao_classificado' ? '' : existing.origin) : '';
+      const defaultDate = existing ? existing.date : todayISO();
+
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-5 fade-in">
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">
+                ${isEdit ? 'Editar Registro de Erro' : 'Registrar Novo Erro'}
+              </h2>
+              <p class="text-sm text-slate-500 mt-0.5">
+                ${isEdit ? 'Atualize os detalhes, a classificação ou a origem do seu erro.' : 'Transforme a questão errada em aprendizado estruturado.'}
+              </p>
+            </div>
+            <button onclick="navigate('erros')" class="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50">
+              ← Voltar para Meus Erros
+            </button>
+          </div>
+
+          <form id="error-form" onsubmit="handleSaveError(event)" class="card-premium p-5 sm:p-7 space-y-6">
+            <input type="hidden" id="form-id" value="${existing ? existing.id : ''}" />
+
+            <!-- Matéria e Tópico -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wide text-slate-700 mb-1.5">1. Matéria *</label>
+                <div class="flex gap-2">
+                  <select id="form-subject" onchange="updateTopicSuggestions()" required class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                    <option value="">Selecione uma matéria...</option>
+                    ${state.subjects.map(s => `<option value="${escapeHTML(s.name)}" ${s.name === defaultSubject ? 'selected' : ''}>${escapeHTML(s.name)}</option>`).join('')}
+                  </select>
+                  <button type="button" onclick="toggleInlineNewSubject()" class="px-3 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 shrink-0" title="Adicionar nova matéria">
+                    + Nova
+                  </button>
+                </div>
+                <div id="inline-new-subject-box" class="hidden mt-2 flex gap-2">
+                  <input type="text" id="inline-new-subject-input" placeholder="Nome da nova matéria..." class="flex-1 px-3 py-2 rounded-xl border border-indigo-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <button type="button" onclick="addInlineSubject()" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700">Adicionar</button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wide text-slate-700 mb-1.5">2. Tópico / Assunto Específico *</label>
+                <input type="text" id="form-topic" list="topic-datalist" value="${escapeHTML(defaultTopic)}" required placeholder="Ex.: Atos administrativos, Crase, Concordância..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                <datalist id="topic-datalist"></datalist>
+                <p class="text-[11px] text-slate-400 mt-1">Escolha uma sugestão ou digite um tópico novo.</p>
+              </div>
+            </div>
+
+            <!-- Descrição, Correção e Prevenção -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wide text-slate-700 mb-1.5">3. Descrição do Erro *</label>
+              <textarea id="form-description" rows="3" required placeholder="O que você errou na questão? Qual pegadinha ou conceito falhou?" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">${escapeHTML(existing ? existing.description : '')}</textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wide text-slate-700 mb-1.5">4. Correção / Entendimento Correto *</label>
+              <textarea id="form-correction" rows="3" required placeholder="Qual é a regra correta, o dispositivo legal ou a explicação definitiva?" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">${escapeHTML(existing ? existing.correction : '')}</textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wide text-slate-700 mb-1.5">5. Como evitar esse erro novamente? (Macete ou Alerta) *</label>
+              <textarea id="form-prevention" rows="2" required placeholder="Ex.: Lembrar que revogação é mérito (ex nunc) e anulação é ilegalidade (ex tunc)." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">${escapeHTML(existing ? existing.prevention : '')}</textarea>
+            </div>
+
+            <!-- Classificação de Prioridade -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wide text-slate-700 mb-2">6. Classificação de Prioridade *</label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                ${['alta', 'media', 'superado'].map(key => {
+                  const p = PRIORITIES[key];
+                  return `
+                    <div>
+                      <input type="radio" name="priority" id="prio-${key}" value="${key}" ${defaultPriority === key ? 'checked' : ''} class="hidden priority-radio" />
+                      <label for="prio-${key}" class="block h-full p-3.5 rounded-xl border-2 cursor-pointer transition ${p.borderClass}">
+                        <div class="flex items-center gap-2 font-extrabold text-sm">
+                          <span>${p.dot}</span>
+                          <span>${p.label.toUpperCase()}</span>
+                        </div>
+                        <p class="text-[11px] opacity-85 mt-1.5 leading-relaxed">${p.desc}</p>
+                      </label>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- Origem do Erro (Obrigatório) -->
+            <div>
+              <div class="flex items-center justify-between flex-wrap gap-1 mb-2">
+                <label class="block text-xs font-bold uppercase tracking-wide text-slate-700">7. Qual foi a origem do meu erro? *</label>
+                <span class="text-[11px] text-indigo-600 font-semibold">Campo obrigatório para diagnóstico</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                ${['desconhecimento', 'confusao', 'esquecimento', 'interpretacao'].map(key => {
+                  const o = ORIGINS[key];
+                  return `
+                    <div>
+                      <input type="radio" name="origin" id="orig-${key}" value="${key}" ${defaultOrigin === key ? 'checked' : ''} class="hidden origin-radio" />
+                      <label for="orig-${key}" class="block h-full p-3.5 rounded-xl border-2 cursor-pointer transition ${o.cardClass}">
+                        <div class="flex items-center gap-2 font-extrabold text-sm">
+                          <i data-lucide="${o.icon}" class="w-4 h-4 shrink-0"></i>
+                          <span>${o.label}</span>
+                        </div>
+                        <p class="text-xs opacity-90 mt-1 leading-snug">${o.desc}</p>
+                        <p class="text-[11px] opacity-70 mt-1 italic">${o.example}</p>
+                      </label>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+              <p id="origin-error-msg" class="hidden text-xs font-bold text-rose-600 mt-2">Por favor, selecione qual foi a origem do seu erro.</p>
+            </div>
+
+            <!-- Questão de referência e Data -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wide text-slate-700 mb-1.5">8. Questão de Referência (Opcional)</label>
+                <input type="text" id="form-reference" value="${escapeHTML(existing ? existing.reference : '')}" placeholder="Ex.: Q2458910 - FCC TRT 2025 ou link" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wide text-slate-700 mb-1.5">9. Data do Registro *</label>
+                <input type="date" id="form-date" value="${defaultDate}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-end gap-3">
+              <button type="button" onclick="navigate('${isEdit ? 'erros' : 'dashboard'}')" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50">
+                Cancelar
+              </button>
+              <button type="submit" class="px-6 py-2.5 rounded-xl gradient-brand text-white font-extrabold text-sm shadow-md hover:opacity-95 flex items-center gap-2">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>${isEdit ? 'SALVAR ALTERAÇÕES' : 'SALVAR ERRO'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+
+      updateTopicSuggestions();
+    }
+
+    function updateTopicSuggestions() {
+      const sel = document.getElementById('form-subject');
+      const dl = document.getElementById('topic-datalist');
+      if (!sel || !dl) return;
+      const subj = state.subjects.find(s => s.name === sel.value);
+      const topics = subj ? subj.topics : [];
+      dl.innerHTML = topics.map(t => `<option value="${escapeHTML(t)}"></option>`).join('');
+    }
+
+    function toggleInlineNewSubject() {
+      const box = document.getElementById('inline-new-subject-box');
+      box.classList.toggle('hidden');
+      if (!box.classList.contains('hidden')) {
+        document.getElementById('inline-new-subject-input').focus();
+      }
+    }
+
+    function addInlineSubject() {
+      const input = document.getElementById('inline-new-subject-input');
+      const name = input.value.trim();
+      if (!name) return showToast('Digite o nome da nova matéria.', 'warning');
+      const exists = state.subjects.find(s => s.name.toLowerCase() === name.toLowerCase());
+      if (exists) {
+        document.getElementById('form-subject').value = exists.name;
+        toggleInlineNewSubject();
+        updateTopicSuggestions();
+        return showToast('Essa matéria já existia e foi selecionada.', 'info');
+      }
+      state.subjects.push({ id: generateId('sub'), name, topics: [] });
+      state.subjects.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+      saveState();
+
+      const sel = document.getElementById('form-subject');
+      sel.innerHTML = '<option value="">Selecione uma matéria...</option>' + state.subjects.map(s => `<option value="${escapeHTML(s.name)}" ${s.name === name ? 'selected' : ''}>${escapeHTML(s.name)}</option>`).join('');
+      input.value = '';
+      toggleInlineNewSubject();
+      updateTopicSuggestions();
+      showToast(`Matéria "${name}" adicionada!`, 'success');
+    }
+
+    function handleSaveError(event) {
+      event.preventDefault();
+      const id = document.getElementById('form-id').value.trim();
+      const subject = document.getElementById('form-subject').value.trim();
+      const topic = document.getElementById('form-topic').value.trim();
+      const description = document.getElementById('form-description').value.trim();
+      const correction = document.getElementById('form-correction').value.trim();
+      const prevention = document.getElementById('form-prevention').value.trim();
+      const priorityEl = document.querySelector('input[name="priority"]:checked');
+      const originEl = document.querySelector('input[name="origin"]:checked');
+      const reference = document.getElementById('form-reference').value.trim();
+      const date = document.getElementById('form-date').value || todayISO();
+
+      const originErrMsg = document.getElementById('origin-error-msg');
+      if (!originEl) {
+        originErrMsg.classList.remove('hidden');
+        showToast('Selecione a origem do erro antes de salvar.', 'error');
+        return;
+      } else {
+        originErrMsg.classList.add('hidden');
+      }
+
+      if (!subject || !topic || !description || !correction || !prevention || !priorityEl) {
+        showToast('Preencha todos os campos obrigatórios.', 'error');
+        return;
+      }
+
+      const priority = priorityEl.value;
+      const origin = originEl.value;
+      const now = new Date().toISOString();
+
+      if (id) {
+        const idx = state.errors.findIndex(e => e.id === id);
+        if (idx !== -1) {
+          const prev = state.errors[idx];
+          state.errors[idx] = {
+            ...prev,
+            subject, topic, description, correction, prevention, priority, origin, reference, date,
+            updatedAt: now,
+            overcomeAt: priority === 'superado' ? (prev.overcomeAt || now) : null
+          };
+          recordHistory('Edição de erro', `${subject} > ${topic}`);
+          showToast('Registro atualizado com sucesso!', 'success');
+        }
+      } else {
+        const newErr = {
+          id: generateId('err'),
+          subject, topic, description, correction, prevention, priority, origin, reference, date,
+          createdAt: now,
+          updatedAt: now,
+          overcomeAt: priority === 'superado' ? now : null,
+          reviewCount: 0
+        };
+        state.errors.unshift(newErr);
+        recordHistory('Novo erro registrado', `${subject} > ${topic} (${PRIORITIES[priority].short})`);
+        showToast('Erro registrado com sucesso!', 'success');
+      }
+
+      syncSubjectsFromErrors();
+      saveState();
+      expandedTopics[`${subject}|||${topic}`] = true;
+      navigate('erros');
+    }
+
+    // =========================================================================
+    // VIEW 3: MEUS ERROS (ORGANIZAÇÃO POR MATÉRIA -> TÓPICO + FILTROS COMBINADOS)
+    // =========================================================================
+    function getFilteredErrors() {
+      const q = filters.search.trim().toLowerCase();
+      return state.errors.filter(err => {
+        if (filters.subject && err.subject !== filters.subject) return false;
+        if (filters.topic && err.topic !== filters.topic) return false;
+        if (filters.priority && err.priority !== filters.priority) return false;
+        if (filters.origin && err.origin !== filters.origin) return false;
+        if (filters.dateFrom && err.date < filters.dateFrom) return false;
+        if (filters.dateTo && err.date > filters.dateTo) return false;
+        if (q) {
+          const haystack = `${err.subject} ${err.topic} ${err.description} ${err.correction} ${err.prevention} ${err.reference}`.toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderMyErrors(container) {
+      const filtered = getFilteredErrors();
+
+      // Tópicos disponíveis para o filtro (conforme matéria selecionada)
+      const availableTopics = [...new Set(
+        state.errors
+          .filter(e => !filters.subject || e.subject === filters.subject)
+          .map(e => e.topic)
+      )].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+      // Agrupar por Matéria -> Tópico
+      const grouped = {};
+      filtered.forEach(err => {
+        if (!grouped[err.subject]) grouped[err.subject] = {};
+        if (!grouped[err.subject][err.topic]) grouped[err.subject][err.topic] = [];
+        grouped[err.subject][err.topic].push(err);
+      });
+
+      const hasActiveFilters = Object.values(filters).some(Boolean);
+      const subjectNames = Object.keys(grouped).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+      container.innerHTML = `
+        <div class="space-y-5 fade-in">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Meus Erros</h2>
+              <p class="text-sm text-slate-500">Organizados por Matéria → Tópico. Altere prioridade e origem rapidamente sem abrir o formulário.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="expandCollapseAllTopics(true)" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50">Expandir todos</button>
+              <button onclick="expandCollapseAllTopics(false)" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50">Recolher</button>
+            </div>
+          </div>
+
+          <!-- Painel de Busca e Filtros Combinados -->
+          <div class="card-premium p-4 sm:p-5 space-y-3.5">
+            <div class="flex flex-col md:flex-row gap-3">
+              <div class="relative flex-1">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="filter-search" value="${escapeHTML(filters.search)}" oninput="updateFilter('search', this.value)" placeholder="Pesquisar palavras nas descrições, correções, macetes ou referências..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              ${hasActiveFilters ? `
+                <button onclick="clearFilters()" class="px-4 py-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 flex items-center justify-center gap-1.5 shrink-0">
+                  <i data-lucide="filter-x" class="w-4 h-4"></i>
+                  Limpar filtros
+                </button>
+              ` : ''}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <select onchange="updateFilter('subject', this.value)" class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400">
+                <option value="">Todas as matérias</option>
+                ${state.subjects.map(s => `<option value="${escapeHTML(s.name)}" ${filters.subject === s.name ? 'selected' : ''}>${escapeHTML(s.name)}</option>`).join('')}
+              </select>
+
+              <select onchange="updateFilter('topic', this.value)" class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400">
+                <option value="">Todos os tópicos</option>
+                ${availableTopics.map(t => `<option value="${escapeHTML(t)}" ${filters.topic === t ? 'selected' : ''}>${escapeHTML(t)}</option>`).join('')}
+              </select>
+
+              <select onchange="updateFilter('priority', this.value)" class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400">
+                <option value="">Todas as prioridades</option>
+                <option value="alta" ${filters.priority === 'alta' ? 'selected' : ''}>🔴 Prioridade Alta</option>
+                <option value="media" ${filters.priority === 'media' ? 'selected' : ''}>🟡 Prioridade Média</option>
+                <option value="superado" ${filters.priority === 'superado' ? 'selected' : ''}>🟢 Superado</option>
+              </select>
+
+              <select onchange="updateFilter('origin', this.value)" class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-400">
+                <option value="">Todas as origens</option>
+                <option value="desconhecimento" ${filters.origin === 'desconhecimento' ? 'selected' : ''}>Desconhecimento</option>
+                <option value="confusao" ${filters.origin === 'confusao' ? 'selected' : ''}>Confusão entre conceitos</option>
+                <option value="esquecimento" ${filters.origin === 'esquecimento' ? 'selected' : ''}>Esquecimento</option>
+                <option value="interpretacao" ${filters.origin === 'interpretacao' ? 'selected' : ''}>Erro de interpretação</option>
+                <option value="nao_classificado" ${filters.origin === 'nao_classificado' ? 'selected' : ''}>Não classificado</option>
+              </select>
+
+              <div class="flex items-center gap-1.5">
+                <input type="date" value="${filters.dateFrom}" onchange="updateFilter('dateFrom', this.value)" title="Data inicial" class="w-1/2 px-2 py-2 rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-700 outline-none" />
+                <input type="date" value="${filters.dateTo}" onchange="updateFilter('dateTo', this.value)" title="Data final" class="w-1/2 px-2 py-2 rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-700 outline-none" />
+              </div>
+            </div>
+
+            <div class="text-xs text-slate-500 flex items-center justify-between pt-1">
+              <span>Exibindo <strong class="text-slate-800">${filtered.length}</strong> de ${state.errors.length} registro(s)</span>
+              ${hasActiveFilters ? '<span class="text-indigo-600 font-semibold">Filtros combinados ativos</span>' : ''}
+            </div>
+          </div>
+
+          <!-- Listagem Hierárquica: Matéria -> Tópico -> Erros -->
+          ${filtered.length === 0 ? `
+            <div class="card-premium p-10 text-center">
+              <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="search-x" class="w-6 h-6"></i>
+              </div>
+              <h3 class="font-bold text-slate-800">Nenhum erro encontrado</h3>
+              <p class="text-sm text-slate-500 mt-1">${state.errors.length === 0 ? 'Cadastre seu primeiro erro para vê-lo organizado aqui.' : 'Tente ajustar ou limpar os filtros aplicados.'}</p>
+            </div>
+          ` : `
+            <div class="space-y-5">
+              ${subjectNames.map(subjectName => {
+                const topicsObj = grouped[subjectName];
+                const topicNames = Object.keys(topicsObj).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                const totalInSubj = topicNames.reduce((acc, t) => acc + topicsObj[t].length, 0);
+
+                return `
+                  <div class="card-premium overflow-hidden">
+                    <!-- Cabeçalho da Matéria -->
+                    <div class="px-5 py-3.5 gradient-soft border-b border-indigo-100 flex items-center justify-between flex-wrap gap-2">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg gradient-brand text-white flex items-center justify-center shadow-xs">
+                          <i data-lucide="book-marked" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                          <h3 class="font-extrabold text-slate-900 text-base">${escapeHTML(subjectName)}</h3>
+                          <p class="text-[11px] text-slate-500">${topicNames.length} tópico(s) • ${totalInSubj} erro(s)</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Tópicos da Matéria -->
+                    <div class="divide-y divide-slate-100">
+                      ${topicNames.map(topicName => {
+                        const topicErrors = topicsObj[topicName];
+                        const topicKey = `${subjectName}|||${topicName}`;
+                        const isOpen = expandedTopics[topicKey] !== undefined ? expandedTopics[topicKey] : (hasActiveFilters || topicErrors.length <= 4);
+
+                        const altaC = topicErrors.filter(e => e.priority === 'alta').length;
+                        const mediaC = topicErrors.filter(e => e.priority === 'media').length;
+                        const supC = topicErrors.filter(e => e.priority === 'superado').length;
+
+                        return `
+                          <div>
+                            <button onclick="toggleTopicGroup('${escapeHTML(topicKey).replace(/'/g, "\\'")}')" class="w-full px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/80 transition text-left">
+                              <div class="flex items-center gap-2.5 min-w-0">
+                                <i data-lucide="${isOpen ? 'chevron-down' : 'chevron-right'}" class="w-4 h-4 text-indigo-600 shrink-0"></i>
+                                <span class="font-bold text-slate-800 text-sm truncate">${escapeHTML(topicName)}</span>
+                                <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">${topicErrors.length}</span>
+                              </div>
+                              <div class="flex items-center gap-1.5 text-[11px] font-bold shrink-0">
+                                ${altaC ? `<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">🔴 ${altaC}</span>` : ''}
+                                ${mediaC ? `<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">🟡 ${mediaC}</span>` : ''}
+                                ${supC ? `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">🟢 ${supC}</span>` : ''}
+                              </div>
+                            </button>
+
+                            ${isOpen ? `
+                              <div class="px-4 sm:px-5 pb-4 pt-1 space-y-3 bg-slate-50/40">
+                                ${topicErrors.map(err => renderErrorCard(err)).join('')}
+                              </div>
+                            ` : ''}
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function renderErrorCard(err) {
+      const p = getPriorityMeta(err.priority);
+      const o = getOriginMeta(err.origin);
+
+      return `
+        <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs hover:border-indigo-200 transition">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border ${p.badgeClass}">${p.dot} ${p.label}</span>
+              <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border ${o.badgeClass} inline-flex items-center gap-1">
+                <i data-lucide="${o.icon}" class="w-3 h-3"></i>
+                ${o.label}
+              </span>
+              <span class="text-xs text-slate-400 flex items-center gap-1">
+                <i data-lucide="calendar" class="w-3 h-3"></i>
+                ${formatDateBR(err.date)}
+              </span>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <button onclick="openDetailModal('${err.id}')" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 flex items-center gap-1">
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i> Detalhes
+              </button>
+              <button onclick="openRegisterForm('${err.id}')" class="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100" title="Editar registro">
+                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="confirmDeleteError('${err.id}')" class="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50" title="Excluir registro">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+          <p class="text-sm text-slate-800 mt-2.5 leading-relaxed">${escapeHTML(err.description)}</p>
+
+          ${err.prevention ? `
+            <div class="mt-2.5 px-3 py-2 rounded-lg bg-amber-50/70 border border-amber-100 text-xs text-amber-900 flex items-start gap-2">
+              <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5"></i>
+              <span><strong>Alerta:</strong> ${escapeHTML(err.prevention)}</span>
+            </div>
+          ` : ''}
+
+          <!-- Alteração rápida inline de Prioridade e Origem -->
+          <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex flex-wrap items-center gap-2">
+              <label class="text-slate-500 font-semibold">Alterar rápido:</label>
+              <select onchange="quickUpdatePriority('${err.id}', this.value)" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 font-semibold text-slate-700 text-xs outline-none focus:border-indigo-400">
+                <option value="alta" ${err.priority === 'alta' ? 'selected' : ''}>🔴 Prioridade Alta</option>
+                <option value="media" ${err.priority === 'media' ? 'selected' : ''}>🟡 Prioridade Média</option>
+                <option value="superado" ${err.priority === 'superado' ? 'selected' : ''}>🟢 Superado</option>
+              </select>
+
+              <select onchange="quickUpdateOrigin('${err.id}', this.value)" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 font-semibold text-slate-700 text-xs outline-none focus:border-indigo-400">
+                ${err.origin === 'nao_classificado' ? '<option value="nao_classificado" selected>Não classificado</option>' : ''}
+                <option value="desconhecimento" ${err.origin === 'desconhecimento' ? 'selected' : ''}>Origem: Desconhecimento</option>
+                <option value="confusao" ${err.origin === 'confusao' ? 'selected' : ''}>Origem: Confusão entre conceitos</option>
+                <option value="esquecimento" ${err.origin === 'esquecimento' ? 'selected' : ''}>Origem: Esquecimento</option>
+                <option value="interpretacao" ${err.origin === 'interpretacao' ? 'selected' : ''}>Origem: Erro de interpretação</option>
+              </select>
+            </div>
+            ${err.reference ? `<span class="text-[11px] text-slate-400 truncate max-w-[220px]" title="${escapeHTML(err.reference)}">Ref.: ${escapeHTML(err.reference)}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function updateFilter(key, val) {
+      filters[key] = val;
+      if (key === 'subject') filters.topic = '';
+      renderMyErrors(document.getElementById('app-content'));
+      lucide.createIcons();
+      if (key === 'search') {
+        const inp = document.getElementById('filter-search');
+        if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+      }
+    }
+
+    function clearFilters() {
+      filters = { search: '', subject: '', topic: '', priority: '', origin: '', dateFrom: '', dateTo: '' };
+      renderMyErrors(document.getElementById('app-content'));
+      lucide.createIcons();
+    }
+
+    function toggleTopicGroup(key) {
+      const curr = expandedTopics[key];
+      expandedTopics[key] = curr === undefined ? false : !curr;
+      renderMyErrors(document.getElementById('app-content'));
+      lucide.createIcons();
+    }
+
+    function expandCollapseAllTopics(expand) {
+      state.errors.forEach(e => {
+        expandedTopics[`${e.subject}|||${e.topic}`] = expand;
+      });
+      renderMyErrors(document.getElementById('app-content'));
+      lucide.createIcons();
+    }
+
+    function quickUpdatePriority(id, newPrio) {
+      const err = state.errors.find(e => e.id === id);
+      if (!err) return;
+      err.priority = newPrio;
+      err.updatedAt = new Date().toISOString();
+      if (newPrio === 'superado') err.overcomeAt = err.overcomeAt || err.updatedAt;
+      else err.overcomeAt = null;
+      recordHistory('Prioridade alterada', `${err.subject} > ${err.topic} → ${PRIORITIES[newPrio].label}`);
+      saveState();
+      showToast(`Prioridade alterada para ${PRIORITIES[newPrio].label}!`, 'success');
+      navigate(currentView);
+    }
+
+    function quickUpdateOrigin(id, newOrigin) {
+      const err = state.errors.find(e => e.id === id);
+      if (!err) return;
+      err.origin = newOrigin;
+      err.updatedAt = new Date().toISOString();
+      recordHistory('Origem alterada', `${err.subject} > ${err.topic} → ${getOriginMeta(newOrigin).label}`);
+      saveState();
+      showToast(`Origem atualizada para "${getOriginMeta(newOrigin).label}"!`, 'info');
+      navigate(currentView);
+    }
+
+    function confirmDeleteError(id) {
+      const err = state.errors.find(e => e.id === id);
+      if (!err) return;
+      openConfirmModal(
+        'Excluir registro de erro?',
+        `Tem certeza que deseja excluir este erro de "${err.subject} - ${err.topic}"? Essa ação não pode ser desfeita.`,
+        () => {
+          state.errors = state.errors.filter(e => e.id !== id);
+          recordHistory('Erro excluído', `${err.subject} > ${err.topic}`);
+          saveState();
+          closeDetailModal();
+          showToast('Registro excluído.', 'info');
+          navigate(currentView);
+        }
+      );
+    }
+
+    // =========================================================================
+    // MODAL DE DETALHES
+    // =========================================================================
+    function openDetailModal(id) {
+      const err = state.errors.find(e => e.id === id);
+      if (!err) return;
+      const p = getPriorityMeta(err.priority);
+      const o = getOriginMeta(err.origin);
+
+      const isLink = err.reference && /^https?:\/\//i.test(err.reference.trim());
+
+      document.getElementById('detail-modal-body').innerHTML = `
+        <div class="p-6 border-b border-slate-100 flex items-start justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border ${p.badgeClass}">${p.dot} ${p.label}</span>
+              <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border ${o.badgeClass}">${o.label}</span>
+            </div>
+            <h3 class="text-lg font-extrabold text-slate-900 mt-2">${escapeHTML(err.subject)}</h3>
+            <p class="text-sm font-semibold text-indigo-600">${escapeHTML(err.topic)}</p>
+          </div>
+          <button onclick="closeDetailModal()" class="p-2 rounded-xl text-slate-400 hover:bg-slate-100">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Descrição do Erro</p>
+            <p class="text-sm text-slate-800 mt-1 whitespace-pre-line leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-100">${escapeHTML(err.description)}</p>
+          </div>
+
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wide text-emerald-600">Correção / Entendimento Correto</p>
+            <p class="text-sm text-slate-800 mt-1 whitespace-pre-line leading-relaxed bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-100">${escapeHTML(err.correction)}</p>
+          </div>
+
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wide text-amber-600">Como Evitar Novamente (Macete / Alerta)</p>
+            <p class="text-sm text-amber-950 mt-1 whitespace-pre-line leading-relaxed bg-amber-50/70 p-3.5 rounded-xl border border-amber-100">${escapeHTML(err.prevention)}</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs text-slate-500">
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <span class="font-bold text-slate-700 block">Data do registro</span>
+              <span>${formatDateBR(err.date)}</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <span class="font-bold text-slate-700 block">Questão de referência</span>
+              ${err.reference ? (isLink ? `<a href="${escapeHTML(err.reference)}" target="_blank" rel="noopener" class="text-indigo-600 underline break-all">${escapeHTML(err.reference)}</a>` : `<span>${escapeHTML(err.reference)}</span>`) : '<span>Não informada</span>'}
+            </div>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+          <button onclick="confirmDeleteError('${err.id}')" class="px-3.5 py-2 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold flex items-center gap-1.5">
+            <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir
+          </button>
+          <div class="flex items-center gap-2">
+            <button onclick="closeDetailModal(); openRegisterForm('${err.id}')" class="px-4 py-2 rounded-xl border border-indigo-200 bg-white text-indigo-700 text-xs font-bold hover:bg-indigo-50 flex items-center gap-1.5">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Editar
+            </button>
+            <button onclick="closeDetailModal()" class="px-4 py-2 rounded-xl gradient-brand text-white text-xs font-bold">Fechar</button>
+          </div>
+        </div>
+      `;
+
+      const modal = document.getElementById('detail-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      lucide.createIcons({ nodes: [modal] });
+    }
+
+    function closeDetailModal() {
+      const modal = document.getElementById('detail-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // =========================================================================
+    // VIEW 4: MEU SEGUNDO CICLO (REVISÃO ATIVA)
+    // =========================================================================
+    function renderSecondCycle(container) {
+      const pending = state.errors.filter(e => e.priority !== 'superado');
+      const highErrors = pending.filter(e => e.priority === 'alta');
+      const medErrors = pending.filter(e => e.priority === 'media');
+
+      // Matérias com maior concentração de dificuldades (pendentes)
+      const pendingBySubj = {};
+      const pendingByTopic = {};
+      pending.forEach(e => {
+        pendingBySubj[e.subject] = (pendingBySubj[e.subject] || 0) + 1;
+        const tk = `${e.subject}|||${e.topic}`;
+        if (!pendingByTopic[tk]) pendingByTopic[tk] = { subject: e.subject, topic: e.topic, count: 0, high: 0 };
+        pendingByTopic[tk].count++;
+        if (e.priority === 'alta') pendingByTopic[tk].high++;
+      });
+
+      const topSubj = Object.entries(pendingBySubj).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const topTopics = Object.values(pendingByTopic).sort((a, b) => b.high - a.high || b.count - a.count).slice(0, 5);
+
+      container.innerHTML = `
+        <div class="space-y-6 fade-in">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Meu Segundo Ciclo</h2>
+              <p class="text-sm text-slate-500">Revisão ativa de todos os erros ainda não superados. Tente lembrar antes de revelar a correção.</p>
+            </div>
+            ${pending.length > 0 ? `
+              <button onclick="openReviewModal('${(highErrors[0] || medErrors[0]).id}')" class="px-4 py-2.5 rounded-xl gradient-brand text-white font-bold text-sm shadow-md hover:opacity-95 flex items-center gap-2">
+                <i data-lucide="play-circle" class="w-4 h-4"></i>
+                Iniciar Revisão Rápida
+              </button>
+            ` : ''}
+          </div>
+
+          ${pending.length === 0 ? `
+            <div class="card-premium p-10 text-center bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
+              <div class="w-16 h-16 rounded-2xl bg-emerald-500 text-white flex items-center justify-center mx-auto mb-4 shadow-md">
+                <i data-lucide="trophy" class="w-8 h-8"></i>
+              </div>
+              <h3 class="text-lg font-extrabold text-emerald-900">Excelente trabalho! Nenhum erro pendente no Segundo Ciclo.</h3>
+              <p class="text-sm text-emerald-700 mt-1">
+                ${state.errors.length > 0 ? 'Todos os seus erros registrados já foram marcados como superados.' : 'Registre novos erros ao resolver questões para alimentar seu ciclo de revisões.'}
+              </p>
+            </div>
+          ` : `
+            <!-- Resumo de Foco: Matérias e Tópicos críticos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div class="card-premium p-5">
+                <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
+                  <i data-lucide="target" class="w-4 h-4 text-rose-600"></i>
+                  Matérias com Maior Concentração de Dificuldades
+                </h3>
+                <div class="space-y-2.5">
+                  ${topSubj.map(([subj, count]) => `
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="font-semibold text-slate-700 truncate pr-2">${escapeHTML(subj)}</span>
+                      <span class="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 font-bold text-xs shrink-0">${count} pendente(s)</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <div class="card-premium p-5">
+                <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
+                  <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600"></i>
+                  Tópicos que Precisam de Mais Atenção
+                </h3>
+                <div class="space-y-2.5">
+                  ${topTopics.map(t => `
+                    <div class="flex items-center justify-between text-sm">
+                      <div class="truncate pr-2">
+                        <span class="font-semibold text-slate-800">${escapeHTML(t.topic)}</span>
+                        <span class="text-xs text-slate-400 ml-1">(${escapeHTML(t.subject)})</span>
+                      </div>
+                      <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 font-bold text-xs shrink-0">${t.count} erro(s)</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção: Prioridade Alta -->
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">🔴</span>
+                <h3 class="text-base font-extrabold text-rose-700">PRIORIDADE ALTA (${highErrors.length})</h3>
+              </div>
+              ${highErrors.length === 0 ? `
+                <p class="text-xs text-slate-500 bg-white p-4 rounded-xl border border-slate-200">Nenhum erro em Prioridade Alta no momento.</p>
+              ` : `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  ${highErrors.map(err => renderCycleCard(err)).join('')}
+                </div>
+              `}
+            </div>
+
+            <!-- Seção: Prioridade Média -->
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">🟡</span>
+                <h3 class="text-base font-extrabold text-amber-700">PRIORIDADE MÉDIA (${medErrors.length})</h3>
+              </div>
+              ${medErrors.length === 0 ? `
+                <p class="text-xs text-slate-500 bg-white p-4 rounded-xl border border-slate-200">Nenhum erro em Prioridade Média no momento.</p>
+              ` : `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  ${medErrors.map(err => renderCycleCard(err)).join('')}
+                </div>
+              `}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    function renderCycleCard(err) {
+      const p = getPriorityMeta(err.priority);
+      const o = getOriginMeta(err.origin);
+      const borderTop = err.priority === 'alta' ? 'border-t-4 border-t-rose-500' : 'border-t-4 border-t-amber-400';
+
+      return `
+        <div class="card-premium p-4 ${borderTop} flex flex-col justify-between gap-3">
+          <div>
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <span class="text-xs font-extrabold text-indigo-700">${escapeHTML(err.subject)}</span>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full border ${o.badgeClass}">${o.label}</span>
+            </div>
+            <p class="text-xs font-semibold text-slate-500 mt-0.5">${escapeHTML(err.topic)}</p>
+            <p class="text-sm text-slate-800 mt-2 line-clamp-3 leading-relaxed">${escapeHTML(err.description)}</p>
+          </div>
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+            <span class="text-[11px] text-slate-400">Registrado em ${formatDateBR(err.date)} ${err.reviewCount ? `• ${err.reviewCount} rev.` : ''}</span>
+            <button onclick="openReviewModal('${err.id}')" class="px-3.5 py-2 rounded-xl gradient-brand text-white text-xs font-bold shadow-xs hover:opacity-95 flex items-center gap-1.5">
+              <i data-lucide="brain" class="w-3.5 h-3.5"></i>
+              REVISAR ERRO
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function openReviewModal(id) {
+      const err = state.errors.find(e => e.id === id);
+      if (!err) return;
+      const p = getPriorityMeta(err.priority);
+      const o = getOriginMeta(err.origin);
+
+      document.getElementById('review-modal-body').innerHTML = `
+        <div class="p-6 gradient-brand text-white flex items-start justify-between gap-4">
+          <div>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-xs font-bold">
+              <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+              Revisão Ativa — Segundo Ciclo
+            </span>
+            <h3 class="text-lg font-extrabold mt-2">${escapeHTML(err.subject)}</h3>
+            <p class="text-sm text-indigo-100">${escapeHTML(err.topic)}</p>
+          </div>
+          <button onclick="closeReviewModal()" class="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border ${p.badgeClass}">${p.dot} Atual: ${p.label}</span>
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border ${o.badgeClass}">Origem: ${o.label}</span>
+            <span class="text-xs text-slate-400">${formatDateBR(err.date)}</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-1.5">Relembre o erro e tente responder mentalmente:</p>
+            <p class="text-base font-medium text-slate-900 whitespace-pre-line leading-relaxed">${escapeHTML(err.description)}</p>
+            ${err.reference ? `<p class="text-xs text-slate-500 mt-2">Referência: ${escapeHTML(err.reference)}</p>` : ''}
+          </div>
+
+          <!-- Área oculta até clicar em REVELAR CORREÇÃO -->
+          <div id="review-reveal-trigger" class="text-center py-4">
+            <button onclick="revealReviewAnswer()" class="px-6 py-3 rounded-xl gradient-brand text-white font-extrabold text-sm shadow-md hover:opacity-95 inline-flex items-center gap-2">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+              REVELAR CORREÇÃO
+            </button>
+          </div>
+
+          <div id="review-answer-box" class="hidden space-y-4 fade-in">
+            <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+              <p class="text-xs font-bold uppercase tracking-wide text-emerald-700 mb-1">Correção / Entendimento Correto</p>
+              <p class="text-sm text-emerald-950 whitespace-pre-line leading-relaxed">${escapeHTML(err.correction)}</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-amber-50 border border-amber-200">
+              <p class="text-xs font-bold uppercase tracking-wide text-amber-700 mb-1">Como evitar esse erro novamente</p>
+              <p class="text-sm text-amber-950 whitespace-pre-line leading-relaxed">${escapeHTML(err.prevention)}</p>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100">
+              <p class="text-xs font-bold text-slate-600 mb-2.5 text-center">Como você se saiu nessa revisão? (O histórico será preservado)</p>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <button onclick="completeReview('${err.id}', 'alta')" class="py-2.5 px-3 rounded-xl border-2 border-rose-300 bg-rose-50 text-rose-800 font-bold text-xs hover:bg-rose-100 transition">
+                  🔴 Manter Prioridade Alta
+                </button>
+                <button onclick="completeReview('${err.id}', 'media')" class="py-2.5 px-3 rounded-xl border-2 border-amber-300 bg-amber-50 text-amber-800 font-bold text-xs hover:bg-amber-100 transition">
+                  🟡 Alterar para Média
+                </button>
+                <button onclick="completeReview('${err.id}', 'superado')" class="py-2.5 px-3 rounded-xl border-2 border-emerald-400 bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition shadow-sm">
+                  🟢 Marcar como Superado
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const modal = document.getElementById('review-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      lucide.createIcons({ nodes: [modal] });
+    }
+
+    function revealReviewAnswer() {
+      document.getElementById('review-reveal-trigger').classList.add('hidden');
+      document.getElementById('review-answer-box').classList.remove('hidden');
+    }
+
+    function completeReview(id, newPriority) {
+      const err = state.errors.find(e => e.id === id);
+      if (!err) return;
+      err.priority = newPriority;
+      err.reviewCount = Number(err.reviewCount || 0) + 1;
+      err.updatedAt = new Date().toISOString();
+      if (newPriority === 'superado') {
+        err.overcomeAt = err.overcomeAt || err.updatedAt;
+      } else {
+        err.overcomeAt = null;
+      }
+      recordHistory('Revisão concluída (Segundo Ciclo)', `${err.subject} > ${err.topic} → ${PRIORITIES[newPriority].label}`);
+      saveState();
+      closeReviewModal();
+      showToast(
+        newPriority === 'superado'
+          ? 'Parabéns! Erro marcado como SUPERADO e preservado no histórico.'
+          : `Revisão registrada! Classificação atual: ${PRIORITIES[newPriority].label}.`,
+        'success'
+      );
+      navigate('ciclo');
+    }
+
+    function closeReviewModal() {
+      const modal = document.getElementById('review-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // =========================================================================
+    // VIEW 5: MINHA EVOLUÇÃO (COM DIAGNÓSTICO COMPLETO POR ORIGEM DO ERRO)
+    // =========================================================================
+    function renderEvolution(container) {
+      const m = computeMetrics();
+
+      // Encontrar origem mais frequente (dentre as 4 classificadas)
+      const classifiedKeys = ['desconhecimento', 'confusao', 'esquecimento', 'interpretacao'];
+      const classifiedTotal = classifiedKeys.reduce((acc, k) => acc + m.byOrigin[k], 0);
+      let topOriginKey = null;
+      let topOriginCount = 0;
+      classifiedKeys.forEach(k => {
+        if (m.byOrigin[k] > topOriginCount) {
+          topOriginCount = m.byOrigin[k];
+          topOriginKey = k;
+        }
+      });
+      const topOrigin = topOriginKey ? ORIGINS[topOriginKey] : null;
+
+      // Evolução por matéria
+      const subjList = Object.entries(m.bySubject)
+        .map(([name, d]) => ({ name, ...d, pct: d.total > 0 ? Math.round((d.superado / d.total) * 100) : 0 }))
+        .sort((a, b) => b.total - a.total);
+
+      container.innerHTML = `
+        <div class="space-y-6 fade-in">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Minha Evolução</h2>
+            <p class="text-sm text-slate-500">Acompanhe a superação das suas dificuldades e descubra exatamente <strong>por que</strong> você está errando.</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs sm:text-sm text-blue-900 flex items-start gap-2.5">
+            <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+            <span><strong>Lembrete de método:</strong> Os números abaixo medem dificuldades catalogadas para estudo — não desempenho em prova. Quanto mais erros você registra e supera aqui, menos erros leva para o dia do concurso.</span>
+          </div>
+
+          ${m.total === 0 ? `
+            <div class="card-premium p-10 text-center">
+              <p class="text-slate-600 font-semibold">Registre erros para desbloquear os gráficos de evolução e diagnóstico por causa.</p>
+            </div>
+          ` : `
+            <!-- Resumo de evolução -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="card-premium p-4">
+                <p class="text-xs font-semibold text-slate-500">Erros Catalogados</p>
+                <p class="text-2xl font-extrabold text-slate-900 mt-1">${m.total}</p>
+              </div>
+              <div class="card-premium p-4">
+                <p class="text-xs font-semibold text-emerald-700">Já Superados</p>
+                <p class="text-2xl font-extrabold text-emerald-600 mt-1">${m.superado}</p>
+              </div>
+              <div class="card-premium p-4">
+                <p class="text-xs font-semibold text-amber-700">Em Aberto (Alta + Média)</p>
+                <p class="text-2xl font-extrabold text-amber-600 mt-1">${m.alta + m.media}</p>
+              </div>
+              <div class="card-premium p-4 bg-indigo-50/70 border-indigo-200">
+                <p class="text-xs font-bold text-indigo-700">Percentual de Evolução</p>
+                <p class="text-2xl font-extrabold text-indigo-700 mt-1">${m.pctSuperado}%</p>
+              </div>
+            </div>
+
+            <!-- Diagnóstico por Origem do Erro -->
+            <div class="card-premium p-5 sm:p-6 space-y-5">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="microscope" class="w-5 h-5 text-purple-600"></i>
+                    Diagnóstico por Origem do Erro
+                  </h3>
+                  <p class="text-xs text-slate-500">Identifique qual causa mais aparece nos seus estudos para corrigir a rota.</p>
+                </div>
+                ${topOrigin ? `
+                  <div class="px-3.5 py-2 rounded-xl border ${topOrigin.badgeClass} text-xs font-bold">
+                    Causa mais frequente: ${topOrigin.label} (${Math.round((topOriginCount / m.total) * 100)}%)
+                  </div>
+                ` : ''}
+              </div>
+
+              ${topOrigin ? `
+                <div class="p-4 rounded-xl gradient-soft border border-indigo-200 flex items-start gap-3">
+                  <div class="w-9 h-9 rounded-xl gradient-brand text-white flex items-center justify-center shrink-0">
+                    <i data-lucide="${topOrigin.icon}" class="w-4 h-4"></i>
+                  </div>
+                  <div class="text-xs sm:text-sm">
+                    <p class="font-bold text-slate-900">Recomendação prática para "${topOrigin.label}":</p>
+                    <p class="text-slate-700 mt-0.5">${topOrigin.tip}</p>
+                  </div>
+                </div>
+              ` : ''}
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+                <div class="h-64">
+                  <canvas id="evo-origin-chart"></canvas>
+                </div>
+
+                <div class="space-y-3">
+                  ${['desconhecimento', 'confusao', 'esquecimento', 'interpretacao', 'nao_classificado'].map(key => {
+                    const count = m.byOrigin[key];
+                    if (key === 'nao_classificado' && count === 0) return '';
+                    const o = ORIGINS[key];
+                    const pct = m.total > 0 ? Math.round((count / m.total) * 100) : 0;
+                    return `
+                      <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/70">
+                        <div class="flex items-center justify-between text-xs sm:text-sm">
+                          <span class="font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background:${o.colorHex}"></span>
+                            ${o.label}
+                          </span>
+                          <span class="font-extrabold text-slate-900">${count} <span class="text-slate-500 font-semibold">(${pct}%)</span></span>
+                        </div>
+                        <div class="mt-2 h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                          <div style="width:${pct}%; background:${o.colorHex}" class="h-full rounded-full transition-all duration-500"></div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Gráfico Temporal + Evolução por Matéria -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="card-premium p-5">
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base mb-4 flex items-center gap-2">
+                  <i data-lucide="activity" class="w-4 h-4 text-blue-600"></i>
+                  Evolução ao Longo do Tempo (Acumulado)
+                </h3>
+                <div class="h-64">
+                  <canvas id="evo-timeline-chart"></canvas>
+                </div>
+              </div>
+
+              <div class="card-premium p-5">
+                <h3 class="font-bold text-slate-900 text-sm sm:text-base mb-4 flex items-center gap-2">
+                  <i data-lucide="check-square" class="w-4 h-4 text-emerald-600"></i>
+                  Taxa de Superação por Matéria
+                </h3>
+                <div class="space-y-3.5 max-h-64 overflow-y-auto pr-1">
+                  ${subjList.map(s => `
+                    <div>
+                      <div class="flex items-center justify-between text-xs sm:text-sm mb-1">
+                        <span class="font-bold text-slate-800">${escapeHTML(s.name)}</span>
+                        <span class="text-xs font-bold text-emerald-700">${s.superado}/${s.total} superados (${s.pct}%)</span>
+                      </div>
+                      <div class="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                        <div style="width:${(s.superado / s.total) * 100}%" class="bg-emerald-500"></div>
+                        <div style="width:${(s.media / s.total) * 100}%" class="bg-amber-400"></div>
+                        <div style="width:${(s.alta / s.total) * 100}%" class="bg-rose-500"></div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          `}
+        </div>
+      `;
+
+      if (m.total > 0) {
+        renderEvolutionCharts(m);
+      }
+    }
+
+    function renderEvolutionCharts(m) {
+      // 1. Gráfico de Origens
+      const originKeys = ['desconhecimento', 'confusao', 'esquecimento', 'interpretacao'];
+      if (m.byOrigin.nao_classificado > 0) originKeys.push('nao_classificado');
+
+      const ctxOrig = document.getElementById('evo-origin-chart');
+      if (ctxOrig) {
+        activeCharts.evoOrigin = new Chart(ctxOrig, {
+          type: 'bar',
+          data: {
+            labels: originKeys.map(k => ORIGINS[k].label),
+            datasets: [{
+              label: 'Quantidade de erros',
+              data: originKeys.map(k => m.byOrigin[k]),
+              backgroundColor: originKeys.map(k => ORIGINS[k].colorHex),
+              borderRadius: 8,
+              maxBarThickness: 44
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+              y: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' } } }
+            }
+          }
+        });
+      }
+
+      // 2. Gráfico Temporal Acumulado
+      const dateSet = new Set();
+      state.errors.forEach(e => {
+        if (e.date) dateSet.add(e.date);
+        if (e.overcomeAt) dateSet.add(e.overcomeAt.split('T')[0]);
+      });
+      const sortedDates = Array.from(dateSet).sort();
+      const cumTotal = [];
+      const cumSuperado = [];
+
+      sortedDates.forEach(d => {
+        cumTotal.push(state.errors.filter(e => e.date <= d).length);
+        cumSuperado.push(state.errors.filter(e => e.priority === 'superado' && ((e.overcomeAt ? e.overcomeAt.split('T')[0] : e.date) <= d)).length);
+      });
+
+      const ctxTime = document.getElementById('evo-timeline-chart');
+      if (ctxTime) {
+        activeCharts.evoTimeline = new Chart(ctxTime, {
+          type: 'line',
+          data: {
+            labels: sortedDates.map(formatDateBR),
+            datasets: [
+              {
+                label: 'Total Catalogado',
+                data: cumTotal,
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                fill: true,
+                tension: 0.3,
+                borderWidth: 2.5
+              },
+              {
+                label: 'Erros Superados',
+                data: cumSuperado,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                fill: true,
+                tension: 0.3,
+                borderWidth: 2.5
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            scales: {
+              y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      }
+    }
+
+    // =========================================================================
+    // VIEW 6: MATÉRIAS E TÓPICOS
+    // =========================================================================
+    function renderSubjectsManager(container) {
+      container.innerHTML = `
+        <div class="space-y-6 fade-in">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Matérias e Tópicos</h2>
+            <p class="text-sm text-slate-500">Estruture o edital do seu concurso sem duplicações. Novos tópicos também são salvos automaticamente ao registrar erros.</p>
+          </div>
+
+          <!-- Formulário para adicionar nova matéria -->
+          <div class="card-premium p-5">
+            <h3 class="font-bold text-sm text-slate-800 mb-3">Adicionar Nova Matéria</h3>
+            <form onsubmit="handleAddSubject(event)" class="flex flex-col sm:flex-row gap-3">
+              <input type="text" id="new-subject-name" required placeholder="Ex.: Direito Tributário, Informática, Legislação Municipal..." class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+              <button type="submit" class="px-5 py-2.5 rounded-xl gradient-brand text-white font-bold text-sm shadow-sm hover:opacity-95 shrink-0">
+                + Adicionar Matéria
+              </button>
+            </form>
+          </div>
+
+          <!-- Lista de Matérias -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            ${state.subjects.map(subj => {
+              const count = state.errors.filter(e => e.subject === subj.name).length;
+              return `
+                <div class="card-premium p-5 flex flex-col justify-between gap-4">
+                  <div>
+                    <div class="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 class="font-extrabold text-slate-900 text-base">${escapeHTML(subj.name)}</h3>
+                        <p class="text-xs text-slate-500">${subj.topics.length} tópico(s) • ${count} erro(s) registrado(s)</p>
+                      </div>
+                      <button onclick="confirmDeleteSubject('${subj.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50" title="Remover matéria">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                      </button>
+                    </div>
+
+                    <div class="mt-3 flex flex-wrap gap-1.5">
+                      ${subj.topics.length === 0 ? '<span class="text-xs text-slate-400 italic">Nenhum tópico cadastrado ainda.</span>' : subj.topics.map(t => `
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-800 text-xs font-semibold border border-indigo-100">
+                          ${escapeHTML(t)}
+                          <button onclick="removeTopicFromSubject('${subj.id}', '${escapeHTML(t).replace(/'/g, "\\'")}')" class="text-indigo-400 hover:text-rose-600 ml-0.5" title="Remover tópico">×</button>
+                        </span>
+                      `).join('')}
+                    </div>
+                  </div>
+
+                  <form onsubmit="handleAddTopic(event, '${subj.id}')" class="flex gap-2 pt-3 border-t border-slate-100">
+                    <input type="text" id="topic-input-${subj.id}" placeholder="Adicionar tópico..." class="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs outline-none focus:border-indigo-400" />
+                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-indigo-700 transition">+ Tópico</button>
+                  </form>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function handleAddSubject(event) {
+      event.preventDefault();
+      const input = document.getElementById('new-subject-name');
+      const name = input.value.trim();
+      if (!name) return;
+      if (state.subjects.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+        return showToast('Essa matéria já está cadastrada.', 'warning');
+      }
+      state.subjects.push({ id: generateId('sub'), name, topics: [] });
+      state.subjects.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+      recordHistory('Nova matéria adicionada', name);
+      saveState();
+      showToast(`Matéria "${name}" cadastrada!`, 'success');
+      navigate('materias');
+    }
+
+    function handleAddTopic(event, subjId) {
+      event.preventDefault();
+      const input = document.getElementById(`topic-input-${subjId}`);
+      const topic = input.value.trim();
+      if (!topic) return;
+      const subj = state.subjects.find(s => s.id === subjId);
+      if (!subj) return;
+      if (subj.topics.some(t => t.toLowerCase() === topic.toLowerCase())) {
+        return showToast('Esse tópico já existe nessa matéria.', 'warning');
+      }
+      subj.topics.push(topic);
+      saveState();
+      showToast(`Tópico "${topic}" adicionado!`, 'success');
+      navigate('materias');
+    }
+
+    function removeTopicFromSubject(subjId, topicName) {
+      const subj = state.subjects.find(s => s.id === subjId);
+      if (!subj) return;
+      subj.topics = subj.topics.filter(t => t !== topicName);
+      saveState();
+      navigate('materias');
+    }
+
+    function confirmDeleteSubject(subjId) {
+      const subj = state.subjects.find(s => s.id === subjId);
+      if (!subj) return;
+      const linked = state.errors.filter(e => e.subject === subj.name).length;
+      if (linked > 0) {
+        return showToast(`Não é possível excluir "${subj.name}" pois existem ${linked} erro(s) vinculado(s).`, 'error');
+      }
+      openConfirmModal('Excluir matéria?', `Deseja remover a matéria "${subj.name}" da lista?`, () => {
+        state.subjects = state.subjects.filter(s => s.id !== subjId);
+        saveState();
+        showToast('Matéria removida.', 'info');
+        navigate('materias');
+      });
+    }
+
+    // =========================================================================
+    // VIEW 7: BACKUP E CONFIGURAÇÕES
+    // =========================================================================
+    function renderBackupSettings(container) {
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-6 fade-in">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Backup e Configurações</h2>
+            <p class="text-sm text-slate-500">Seus dados ficam salvos automaticamente neste navegador (localStorage). Exporte backups JSON regularmente para transferir entre computador e celular.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Exportar JSON -->
+            <div class="card-premium p-5 flex flex-col justify-between gap-4">
+              <div>
+                <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-3">
+                  <i data-lucide="download" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-extrabold text-slate-900">Exportar Backup (JSON)</h3>
+                <p class="text-xs text-slate-500 mt-1">Baixe um arquivo completo com todos os seus erros, matérias, tópicos, prioridades, origens e histórico.</p>
+              </div>
+              <button onclick="exportBackupJSON()" class="w-full py-2.5 px-4 rounded-xl gradient-brand text-white font-bold text-sm shadow-sm hover:opacity-95 flex items-center justify-center gap-2">
+                <i data-lucide="file-down" class="w-4 h-4"></i>
+                Baixar Backup JSON
+              </button>
+            </div>
+
+            <!-- Importar JSON -->
+            <div class="card-premium p-5 flex flex-col justify-between gap-4">
+              <div>
+                <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center mb-3">
+                  <i data-lucide="upload" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-extrabold text-slate-900">Importar Backup (JSON)</h3>
+                <p class="text-xs text-slate-500 mt-1">Restaure dados de outro dispositivo. Registros antigos sem origem são preservados como <strong>"Não classificado"</strong>.</p>
+              </div>
+              <div class="space-y-2">
+                <input type="file" id="import-json-input" accept=".json,application/json" class="hidden" onchange="handleImportJSON(event)" />
+                <button onclick="document.getElementById('import-json-input').click()" class="w-full py-2.5 px-4 rounded-xl border-2 border-indigo-200 bg-indigo-50 text-indigo-700 font-bold text-sm hover:bg-indigo-100 flex items-center justify-center gap-2">
+                  <i data-lucide="file-up" class="w-4 h-4"></i>
+                  Selecionar Arquivo JSON
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dados de Exemplo e Reset -->
+          <div class="card-premium p-5 space-y-4">
+            <h3 class="font-extrabold text-slate-900 text-sm">Ferramentas de Teste e Manutenção</h3>
+            <div class="flex flex-wrap gap-3">
+              <button onclick="loadSampleData()" class="px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold hover:bg-emerald-100 flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                Carregar 8 Erros de Exemplo (Concursos)
+              </button>
+              <button onclick="confirmClearAllData()" class="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold hover:bg-rose-100 flex items-center gap-1.5">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                Apagar Todos os Registros
+              </button>
+            </div>
+          </div>
+
+          <!-- Histórico Recente -->
+          <div class="card-premium p-5">
+            <h3 class="font-extrabold text-slate-900 text-sm mb-3 flex items-center gap-2">
+              <i data-lucide="history" class="w-4 h-4 text-indigo-600"></i>
+              Histórico Recente de Alterações
+            </h3>
+            ${state.history.length === 0 ? '<p class="text-xs text-slate-400">Nenhuma alteração registrada ainda.</p>' : `
+              <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                ${state.history.slice(0, 20).map(h => `
+                  <div class="flex items-center justify-between gap-2 text-xs py-1.5 border-b border-slate-100 last:border-0">
+                    <div>
+                      <span class="font-bold text-slate-800">${escapeHTML(h.action)}:</span>
+                      <span class="text-slate-600 ml-1">${escapeHTML(h.details)}</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400 shrink-0">${formatDateTimeBR(h.at)}</span>
+                  </div>
+                `).join('')}
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function exportBackupJSON() {
+      const payload = {
+        app: 'Caderno de Erros | EDUARDO LANDIM',
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        data: state
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `caderno_de_erros_eduardo_landim_${todayISO()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('Backup JSON exportado com sucesso!', 'success');
+    }
+
+    function handleImportJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const dataObj = parsed.data ? parsed.data : parsed;
+          if (!dataObj || !Array.isArray(dataObj.errors)) {
+            throw new Error('Estrutura JSON inválida: lista de erros não encontrada.');
+          }
+          const importedErrors = dataObj.errors.map(normalizeErrorRecord);
+          const importedSubjects = Array.isArray(dataObj.subjects) ? dataObj.subjects : state.subjects;
+
+          openConfirmModal(
+            'Restaurar backup JSON?',
+            `Foram encontrados ${importedErrors.length} registro(s) no arquivo. Ao confirmar, seus registros atuais serão substituídos pelos do backup (registros antigos sem origem ficarão como "Não classificado").`,
+            () => {
+              state.errors = importedErrors;
+              state.subjects = importedSubjects;
+              state.history = Array.isArray(dataObj.history) ? dataObj.history : state.history;
+              syncSubjectsFromErrors();
+              recordHistory('Backup importado', `${importedErrors.length} registro(s) restaurado(s)`);
+              saveState();
+              showToast(`Backup restaurado com ${importedErrors.length} registros!`, 'success');
+              navigate('dashboard');
+            }
+          );
+        } catch (err) {
+          showToast('Arquivo inválido. Selecione um backup JSON gerado por este aplicativo.', 'error');
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmClearAllData() {
+      openConfirmModal(
+        'Apagar todos os registros?',
+        'Isso removerá todos os erros cadastrados e o histórico deste navegador. Recomendamos exportar um backup JSON antes.',
+        () => {
+          state.errors = [];
+          state.history = [];
+          saveState();
+          showToast('Todos os registros foram apagados.', 'info');
+          navigate('dashboard');
+        }
+      );
+    }
+
+    // =========================================================================
+    // DADOS DE EXEMPLO (PARA TESTE RÁPIDO)
+    // =========================================================================
+    function loadSampleData() {
+      const d = (daysAgo) => {
+        const dt = new Date();
+        dt.setDate(dt.getDate() - daysAgo);
+        return dt.toISOString().split('T')[0];
+      };
+      const samples = [
+        {
+          id: generateId('err'),
+          subject: 'Direito Administrativo',
+          topic: 'Atos Administrativos',
+          description: 'Troquei os efeitos da anulação pelos da revogação em questão sobre ato discricionário válido.',
+          correction: 'Anulação decorre de ilegalidade e produz efeitos ex tunc (retroativos). Revogação decorre de conveniência/oportunidade (mérito) sobre ato válido e produz efeitos ex nunc (não retroage).',
+          prevention: 'ANULAÇÃO = ilegalidade = ex Tunc (T de Trás). REVOGAÇÃO = mérito = ex Nunc (N de Nunca retroage).',
+          priority: 'alta',
+          origin: 'confusao',
+          reference: 'FCC - TRT Analista Judiciário',
+          date: d(6),
+          createdAt: new Date(Date.now() - 6 * 86400000).toISOString(),
+          updatedAt: new Date().toISOString(),
+          overcomeAt: null,
+          reviewCount: 1
+        },
+        {
+          id: generateId('err'),
+          subject: 'Direito Constitucional',
+          topic: 'Controle de Constitucionalidade',
+          description: 'Errei o quórum necessário para a modulação temporal dos efeitos na declaração de inconstitucionalidade em ADI.',
+          correction: 'Pelo art. 27 da Lei 9.868/99, o STF pode modular os efeitos por maioria de 2/3 (dois terços) de seus membros, por razões de segurança jurídica ou excepcional interesse social.',
+          prevention: 'Modulação de efeitos na ADI/ADC = 2/3 (8 ministros). Maioria absoluta (6) é para declarar a inconstitucionalidade.',
+          priority: 'media',
+          origin: 'esquecimento',
+          reference: 'Lei 9.868/99, art. 27',
+          date: d(5),
+          createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+          updatedAt: new Date().toISOString(),
+          overcomeAt: null,
+          reviewCount: 2
+        },
+        {
+          id: generateId('err'),
+          subject: 'Direito Constitucional',
+          topic: 'Direitos Fundamentais',
+          description: 'Marquei alternativa correta sem perceber que o enunciado pedia a opção INCORRETA sobre o direito de reunião.',
+          correction: 'O direito de reunião exige fins pacíficos, sem armas, em locais abertos ao público, independentemente de autorização, bastando prévio aviso (que segundo o STF pode ser suprido por divulgação pública).',
+          prevention: 'Sempre sublinhar ou circular o comando final da questão ("INCORRETA", "EXCETO") antes de ler a letra A.',
+          priority: 'superado',
+          origin: 'interpretacao',
+          reference: 'CF/88, art. 5º, XVI',
+          date: d(8),
+          createdAt: new Date(Date.now() - 8 * 86400000).toISOString(),
+          updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+          overcomeAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+          reviewCount: 3
+        },
+        {
+          id: generateId('err'),
+          subject: 'Língua Portuguesa',
+          topic: 'Crase',
+          description: 'Usei crase diante de pronome demonstrativo "essa" sem verificar a impossibilidade de artigo antes dele.',
+          correction: 'Não ocorre crase antes de pronomes demonstrativos "este(s), esta(s), esse(s), essa(s), isto, isso", pois eles não admitem artigo definido feminino.',
+          prevention: 'Só há crase com demonstrativos iniciados por "A" (aquele, aquela, aquilo).',
+          priority: 'superado',
+          origin: 'esquecimento',
+          reference: 'FCC - Português',
+          date: d(4),
+          createdAt: new Date(Date.now() - 4 * 86400000).toISOString(),
+          updatedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+          overcomeAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+          reviewCount: 2
+        },
+        {
+          id: generateId('err'),
+          subject: 'Direito Penal',
+          topic: 'Crimes contra a Administração Pública',
+          description: 'Confundi concussão com corrupção passiva no verbo nuclear do tipo penal.',
+          correction: 'Concussão (art. 316): EXIGIR vantagem indevida. Corrupção passiva (art. 317): SOLICITAR, RECEBER ou ACEITAR promessa de vantagem indevida.',
+          prevention: 'ConCUSSÃO = EXIGE (impõe medo/autoridade). Corrupção = Pede/Aceita.',
+          priority: 'alta',
+          origin: 'confusao',
+          reference: 'CP, arts. 316 e 317',
+          date: d(3),
+          createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+          updatedAt: new Date().toISOString(),
+          overcomeAt: null,
+          reviewCount: 0
+        },
+        {
+          id: generateId('err'),
+          subject: 'Direito Administrativo',
+          topic: 'Licitações e Contratos',
+          description: 'Não conhecia a modalidade Diálogo Competitivo introduzida pela Nova Lei de Licitações (Lei 14.133/2021).',
+          correction: 'O Diálogo Competitivo é utilizado para contratação de obras, serviços e compras em que a Administração realiza diálogos com licitantes previamente selecionados visando desenvolver alternativas para inovação tecnológica ou técnica.',
+          prevention: 'Revisar as 5 modalidades da Lei 14.133/21: Pregão, Concorrência, Concurso, Leilão e Diálogo Competitivo (extintas Tomada de Preços e Convite).',
+          priority: 'alta',
+          origin: 'desconhecimento',
+          reference: 'Lei 14.133/2021, art. 28 e 32',
+          date: d(2),
+          createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+          updatedAt: new Date().toISOString(),
+          overcomeAt: null,
+          reviewCount: 0
+        },
+        {
+          id: generateId('err'),
+          subject: 'Raciocínio Lógico',
+          topic: 'Equivalências Lógicas',
+          description: 'Neguei a condicional (P → Q) mantendo o conectivo "se... então" em vez de trocar pelo conectivo "E".',
+          correction: 'A negação de (P → Q) é (P ∧ ~Q): mantém a primeira E nega a segunda (regra do MANÉ).',
+          prevention: 'Negação do SE...ENTÃO = MANÉ (MAntém a primeira E NEga a segunda). Nunca vira outro "se... então"!',
+          priority: 'media',
+          origin: 'confusao',
+          reference: 'RLM - Equivalências e Negações',
+          date: d(1),
+          createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+          updatedAt: new Date().toISOString(),
+          overcomeAt: null,
+          reviewCount: 1
+        },
+        {
+          id: generateId('err'),
+          subject: 'Direito Processual Penal',
+          topic: 'Inquérito Policial',
+          description: 'Afirmei que o delegado de polícia pode arquivar o inquérito policial quando não houver indícios de autoria.',
+          correction: 'Art. 17 do CPP: A autoridade policial NÃO poderá mandar arquivar autos de inquérito. O arquivamento cabe ao Ministério Público (com controle/comunicação prevista no art. 28 do CPP).',
+          prevention: 'Delegado NUNCA arquiva inquérito policial — princípio da indisponibilidade.',
+          priority: 'superado',
+          origin: 'desconhecimento',
+          reference: 'CPP, art. 17',
+          date: d(0),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          overcomeAt: new Date().toISOString(),
+          reviewCount: 1
+        }
+      ];
+
+      state.errors = [...samples, ...state.errors];
+      syncSubjectsFromErrors();
+      recordHistory('Dados de exemplo carregados', '8 erros de concursos adicionados');
+      saveState();
+      showToast('8 erros de exemplo carregados com sucesso!', 'success');
+      navigate('dashboard');
+    }
+
+    // =========================================================================
+    // INICIALIZAÇÃO
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      pickMotivationalQuote(false);
+      navigate('dashboard');
+    });
+  </script>
+</body>
+</html>
